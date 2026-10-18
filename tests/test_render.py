@@ -284,3 +284,13 @@ def test_mermaid_rendered_with_theme_and_cached(tmp_path, monkeypatch):
     mtime = svgs[0].stat().st_mtime
     build_pdf.preprocess(body, tmp_path, "x", [], theme)
     assert svgs[0].stat().st_mtime == mtime                   # cache hit, no re-render
+
+
+@needs_renderer
+def test_toc_pages_by_named_destination(docs):
+    """Chromium TOC numbers come from named destinations (heading ids), not from text markers."""
+    if RENDERER != "chromium":
+        pytest.skip("WeasyPrint computes TOC numbers itself with target-counter()")
+    build_pdf.build([docs / "dev-guide.md"], None, None, renderer=RENDERER)
+    pages = build_pdf.toc_pages(docs / "pdf" / "dev-guide.pdf", ["dev-guide--prerequisites", "dev-guide--running"])
+    assert len(pages) == 2 and all(p >= 3 for p in pages)

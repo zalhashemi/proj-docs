@@ -345,7 +345,7 @@ class ChromiumRenderer:
             self._print(make_html(None, False), out)
             return warnings
         self._print(make_html(None, True), out)
-        numbers = toc_pages(out)
+        numbers = toc_pages(out, make_html.anchors)
         if len(numbers) != n_entries:
             warnings.append(f"{out.name}: TOC page numbers skipped ({len(numbers)} links for {n_entries} entries)")
             numbers = None
@@ -362,11 +362,15 @@ def launch_chromium(pw):
     return None
 
 
-def toc_pages(pdf: Path) -> list[int]:
-    """1-based destination pages of the internal links between the TOCSTART/TOCEND markers."""
+def toc_pages(pdf: Path, anchors: list[str] | None = None) -> list[int]:
+    """1-based page of each TOC entry. Chromium writes a named destination per linked heading id,
+    so look anchors up by name; fall back to reading link targets between the TOC markers."""
     import fitz
     doc = fitz.open(pdf)
     names = doc.resolve_names() if hasattr(doc, "resolve_names") else {}
+    if anchors and all(a in names for a in anchors):
+        doc.close()
+        return [names[a]["page"] + 1 for a in anchors]
     pages = [i for i, p in enumerate(doc) if "TOCSTART" in p.get_text() or "TOCEND" in p.get_text()]
     if not pages:
         return []
@@ -434,7 +438,7 @@ def render_html(html: str, out: Path, renderer: str = "weasyprint") -> dict:
     r = open_renderer(renderer, warnings)
     try:
         make = lambda numbers, markers: html
-        make.toc_count = 0
+        make.toc_count, make.anchors = 0, []
         out.parent.mkdir(parents=True, exist_ok=True)
         r.render(make, out)
     finally:
@@ -553,6 +557,7 @@ def build(md_paths: list[Path], theme_path: Path | None, out: Path | None, rende
                                  "keywords": "project-docs", "generator": "project-docs"},
                                 _css, _cover + toc_part + "".join(_bodies))
             make_html.toc_count = len(toc_list)
+            make_html.anchors = [anchor for _, anchor, _ in toc_list]
             pdf_path.parent.mkdir(parents=True, exist_ok=True)
             warnings += r.render(make_html, pdf_path) or []
             pages[str(pdf_path)] = finalize(pdf_path, f"{title} — {project}", author, f"{title} for {project}",
