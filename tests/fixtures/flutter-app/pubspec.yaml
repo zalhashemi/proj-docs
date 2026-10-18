@@ -1,0 +1,25 @@
+name: trailmate
+description: Trailmate - plan hikes, track routes and share trail notes.
+version: 2.1.0+21
+publish_to: none
+
+environment:
+  sdk: ">=3.4.0 <4.0.0"
+
+dependencies:
+  flutter:
+    sdk: flutter
+  google_fonts: ^6.2.1
+  firebase_core: ^3.4.0
+  cloud_firestore: ^5.4.0
+  http: ^1.2.2
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^4.0.0
+
+flutter:
+  uses-material-design: true
+  assets:
+    - assets/images/logo.png

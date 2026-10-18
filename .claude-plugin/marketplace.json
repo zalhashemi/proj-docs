@@ -1,0 +1,17 @@
+{
+  "$schema": "https://anthropic.com/claude-code/marketplace.schema.json",
+  "name": "proj-docs",
+  "description": "Branded, evidence-based PDF documentation for any codebase.",
+  "owner": {
+    "name": "Zain Alhashemi",
+    "url": "https://github.com/zalhashemi"
+  },
+  "plugins": [
+    {
+      "name": "project-docs",
+      "description": "Generate branded PDF project docs from your codebase: dev guide, architecture, API reference, runbook, user guide, forecast, budget and more.",
+      "source": "./",
+      "category": "documentation"
+    }
+  ]
+}

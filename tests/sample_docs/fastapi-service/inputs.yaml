@@ -1,0 +1,26 @@
+# Sample answers used to demonstrate the skill. Not real Ledgerline figures.
+org_name: Ledgerline
+api_base_url: http://localhost:8000
+currency: USD
+forecast_start: 2027-01
+starting_users: 180
+monthly_growth_pct: 2-6
+infra_cost_per_user: 0.6
+fixed_infra_cost: 450
+revenue_model: subscription
+arpu: 149
+paid_conversion_pct: 20-35
+budget_start: 2027-01
+team_roles:
+  - Backend developer, 100%, 11000
+  - DevOps engineer, 30%, 12000
+  - QA engineer, 25%, 8000
+tooling_costs:
+  - Sentry Team, 26
+  - GitLab Premium (3 seats), 87
+one_time_costs:
+  - Penetration test, 9000, 2027-06
+  - SOC 2 readiness assessment, 15000
+contingency_pct: 20
+hosting: unknown
+oncall_contact: unknown

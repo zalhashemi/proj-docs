@@ -1,0 +1,30 @@
+{
+  "name": "brightcart",
+  "version": "1.4.0",
+  "description": "BrightCart: a small storefront for independent makers.",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc -b && vite build",
+    "preview": "vite preview",
+    "lint": "eslint .",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "react-router-dom": "^6.26.0",
+    "@sentry/react": "^8.30.0",
+    "@stripe/stripe-js": "^4.5.0"
+  },
+  "devDependencies": {
+    "@testing-library/react": "^16.0.1",
+    "@vitejs/plugin-react": "^4.3.1",
+    "eslint": "^9.10.0",
+    "tailwindcss": "^3.4.10",
+    "typescript": "^5.5.4",
+    "vite": "^5.4.3",
+    "vitest": "^2.0.5"
+  }
+}

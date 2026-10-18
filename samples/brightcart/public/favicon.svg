@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="160" height="40" viewBox="0 0 160 40">
+  <rect x="0" y="4" width="32" height="32" rx="8" fill="#14b8a6"/>
+  <circle cx="16" cy="20" r="7" fill="#f97316"/>
+  <text x="42" y="27" font-family="Poppins, sans-serif" font-size="20" font-weight="600" fill="#1e293b">BrightCart</text>
+</svg>

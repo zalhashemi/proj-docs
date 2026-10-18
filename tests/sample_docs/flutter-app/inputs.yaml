@@ -1,0 +1,17 @@
+# Sample answers used to demonstrate the skill. Not real Trailmate figures.
+currency: USD
+forecast_start: 2027-01
+starting_users: 500
+monthly_growth_pct: 5-15
+infra_cost_per_user: 0.03
+fixed_infra_cost: 25
+revenue_model: none
+budget_start: 2027-01
+team_roles:
+  - Flutter developer, 100%, 7000
+tooling_costs:
+  - Firebase Blaze (base), 25
+one_time_costs:
+  - Apple Developer Program, 99
+  - Google Play registration, 25
+contingency_pct: unknown

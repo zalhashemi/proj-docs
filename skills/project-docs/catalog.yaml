@@ -1,0 +1,548 @@
+# project-docs catalog: one entry per document type.
+#
+# Fields
+#   id               unique slug; output is docs/<id>.md and docs/pdf/<id>.pdf
+#   title            display title
+#   audience         planning | business | developer | ops | user | governance
+#   description      one line shown in the selection menu
+#   sources_to_scan  globs / files / commands the drafter reads (plus scan.json)
+#   required_inputs  questions the repo can't answer: {key, question, type, default, choices?}
+#                    types: text | number | money | choice | multi | bool | list
+#   template         file in templates/
+#   est_pages        rough page range, shown to the user
+#   requires_ui      true -> needs a UI; template has a cli-api variant for no-UI projects
+#   depends_on       doc ids to cross-link
+#   scan_keys        scan.json top-level keys; a change in any of them flags this doc for update
+#   stage            planning | complete | any   (default: complete)
+#
+# Valid scan_keys: project, languages, frameworks, project_type, packages, entry_points,
+#   scripts, openapi, routes, database, infra, ci, tests, env_vars, dependencies,
+#   third_party, docs, git, has_ui
+
+version: 1
+
+presets:
+  developer: [dev-guide, architecture, api-reference, data-model, testing-strategy, cicd-deployment,
+              env-config-reference, contributing, integration-guide, upgrade-migration-guide]
+  business: [project-brief, prd, roadmap, forecast-1yr, budget-resources, risk-register]
+  user: [user-guide, quick-start, admin-guide, release-notes, troubleshooting-faq, upgrade-migration-guide]
+  ops: [runbook, incident-response, monitoring-slos, backup-dr, third-party-services]
+  handover: [handover, dev-guide, architecture, env-config-reference, cicd-deployment, runbook, backup-dr,
+             third-party-services, dependency-inventory, tech-debt-register, stakeholders-raci]
+  everything: ["*"]   # every complete-stage doc (excludes build-plan)
+
+docs:
+
+  # ---------------------------------------------------------------- planning
+  - id: build-plan
+    title: Build Plan
+    audience: planning
+    stage: planning
+    description: "What will be built, how, in which phases, and what could go wrong. The first doc of any project."
+    sources_to_scan: [README*, "docs/**/*.md", package.json, pyproject.toml, "*.md"]
+    required_inputs:
+      - {key: project_goal, question: "In one or two sentences, what is this project for?", type: text, default: unknown}
+      - {key: target_users, question: "Who will use it?", type: text, default: unknown}
+      - {key: stack_preference, question: "Preferred stack or constraints?", type: text, default: "decide during planning"}
+      - {key: deadline, question: "Target completion date?", type: text, default: unknown}
+      - {key: team_size, question: "How many people will build it?", type: number, default: 1}
+    template: build-plan.md
+    est_pages: "3-5"
+    requires_ui: false
+    depends_on: []
+    scan_keys: [project, languages, frameworks, docs]
+
+  # ---------------------------------------------------------------- business
+  - id: project-brief
+    title: Project Brief
+    audience: business
+    description: "One-page summary of problem, solution, users, status and next steps."
+    sources_to_scan: [README*, package.json, pyproject.toml, CHANGELOG*]
+    required_inputs:
+      - {key: org_name, question: "Organisation or team name for the cover?", type: text, default: unknown}
+      - {key: project_goal, question: "In one or two sentences, what problem does the project solve?", type: text, default: unknown}
+      - {key: target_users, question: "Who are the primary users?", type: text, default: unknown}
+    template: project-brief.md
+    est_pages: "1-2"
+    requires_ui: false
+    depends_on: [prd, roadmap]
+    scan_keys: [project, project_type, frameworks, git]
+
+  - id: prd
+    title: Product Requirements Document
+    audience: business
+    description: "Goals, non-goals, personas, user stories, prioritised requirements, acceptance criteria."
+    sources_to_scan: [README*, "docs/**/*.md", routes, "src/**/pages/**", "app/**/page.*"]
+    required_inputs:
+      - {key: project_goal, question: "What problem does the product solve?", type: text, default: unknown}
+      - {key: target_users, question: "Who are the primary users / personas?", type: text, default: unknown}
+      - {key: success_metrics, question: "How will you measure success (KPIs)?", type: text, default: unknown}
+      - {key: non_goals, question: "Anything explicitly out of scope?", type: text, default: unknown}
+    template: prd.md
+    est_pages: "4-8"
+    requires_ui: false
+    depends_on: [project-brief, roadmap]
+    scan_keys: [project, routes, openapi, has_ui]
+
+  - id: roadmap
+    title: Roadmap
+    audience: business
+    description: "Milestones, phases, dependencies and a Gantt-style timeline table."
+    sources_to_scan: [CHANGELOG*, "git tags", "git log --since=6.months", "docs/**/roadmap*", TODO*]
+    required_inputs:
+      - {key: roadmap_start, question: "Roadmap start month (YYYY-MM)?", type: text, default: "next month"}
+      - {key: roadmap_horizon_months, question: "How many months should it cover?", type: number, default: 12}
+      - {key: planned_milestones, question: "Known milestones or launches (comma separated)?", type: list, default: unknown}
+    template: roadmap.md
+    est_pages: "2-4"
+    requires_ui: false
+    depends_on: [prd, risk-register]
+    scan_keys: [git, docs]
+
+  - id: forecast-1yr
+    title: 1-Year Forecast
+    audience: business
+    description: "Monthly users/usage, infra cost and revenue across conservative/base/optimistic scenarios, with charts."
+    sources_to_scan: [infra, "docker-compose*", "*.tf", "k8s/**"]
+    required_inputs:
+      - {key: currency, question: "Currency?", type: choice, choices: [USD, EUR, GBP, other], default: USD}
+      - {key: forecast_start, question: "Forecast start month (YYYY-MM)?", type: text, default: "next month"}
+      - {key: starting_users, question: "Current active users (or expected at launch)?", type: number, default: unknown}
+      - {key: monthly_growth_pct, question: "Monthly user growth % range (low-high)?", type: text, default: "3-10"}
+      - {key: infra_cost_per_user, question: "Infra cost per active user per month?", type: money, default: unknown}
+      - {key: fixed_infra_cost, question: "Fixed monthly infra cost (hosting, base tiers)?", type: money, default: unknown}
+      - {key: revenue_model, question: "Revenue model?", type: choice, choices: [none, subscription, usage-based, one-time], default: none}
+      - {key: arpu, question: "Average revenue per paying user per month?", type: money, default: unknown}
+      - {key: paid_conversion_pct, question: "Free-to-paid conversion % range?", type: text, default: "2-5"}
+    template: forecast-1yr.md
+    est_pages: "4-6"
+    requires_ui: false
+    depends_on: [budget-resources, roadmap]
+    scan_keys: [infra, third_party]
+
+  - id: budget-resources
+    title: Budget and Resource Plan
+    audience: business
+    description: "Team roles x allocation x rate, infra/tooling/licences, contingency, one-time vs recurring, totals by quarter."
+    sources_to_scan: [infra, third_party, dependencies, CODEOWNERS, "git shortlog -sn"]
+    required_inputs:
+      - {key: currency, question: "Currency?", type: choice, choices: [USD, EUR, GBP, other], default: USD}
+      - {key: budget_start, question: "Budget start month (YYYY-MM)?", type: text, default: "next month"}
+      - {key: team_roles, question: "Roles with allocation % and monthly rate (e.g. 'Backend dev, 100%, 9000')?", type: list, default: unknown}
+      - {key: tooling_costs, question: "Monthly tools/SaaS costs (name, amount)?", type: list, default: unknown}
+      - {key: one_time_costs, question: "One-time costs (name, amount)?", type: list, default: unknown}
+      - {key: contingency_pct, question: "Contingency %?", type: number, default: 15}
+    template: budget-resources.md
+    est_pages: "3-5"
+    requires_ui: false
+    depends_on: [forecast-1yr, stakeholders-raci]
+    scan_keys: [infra, third_party, git]
+
+  - id: risk-register
+    title: Risk Register
+    audience: business
+    description: "Risks with likelihood, impact, score, owner, mitigation and trigger."
+    sources_to_scan: [dependencies, tests, ci, "SECURITY*", TODO*, "grep: TODO|FIXME|HACK"]
+    required_inputs:
+      - {key: known_risks, question: "Risks you already know about?", type: list, default: unknown}
+      - {key: risk_owners, question: "People/roles who can own risks?", type: list, default: unknown}
+    template: risk-register.md
+    est_pages: "2-4"
+    requires_ui: false
+    depends_on: [roadmap, security-threat-model, tech-debt-register]
+    scan_keys: [dependencies, tests, ci, infra]
+
+  - id: stakeholders-raci
+    title: Stakeholders and RACI
+    audience: business
+    description: "Who is involved, their interests, and a RACI matrix for key activities."
+    sources_to_scan: [CODEOWNERS, "git shortlog -sn", "MAINTAINERS*", "package.json (author, contributors)"]
+    required_inputs:
+      - {key: stakeholders, question: "Stakeholders (name or role, interest)?", type: list, default: unknown}
+      - {key: org_name, question: "Organisation or team name?", type: text, default: unknown}
+    template: stakeholders-raci.md
+    est_pages: "2-3"
+    requires_ui: false
+    depends_on: [handover]
+    scan_keys: [git]
+
+  - id: competitive-analysis
+    title: Competitive Analysis
+    audience: business
+    description: "Alternatives, feature comparison, positioning and differentiation."
+    sources_to_scan: [README*, "docs/**/*.md"]
+    required_inputs:
+      - {key: competitors, question: "Competitors or alternatives to compare against?", type: list, default: unknown}
+      - {key: differentiators, question: "What makes this project different?", type: text, default: unknown}
+    template: competitive-analysis.md
+    est_pages: "2-4"
+    requires_ui: false
+    depends_on: [prd]
+    scan_keys: [project]
+
+  # ---------------------------------------------------------------- developer
+  - id: dev-guide
+    title: Developer Guide
+    audience: developer
+    description: "Prerequisites, tested clone-to-running steps, structure, workflows, debugging."
+    sources_to_scan: [README*, package.json, pyproject.toml, Makefile, justfile, ".tool-versions", ".nvmrc", ".python-version", "docker-compose*", ".env.example"]
+    required_inputs: []
+    template: dev-guide.md
+    est_pages: "4-8"
+    requires_ui: false
+    depends_on: [architecture, env-config-reference, testing-strategy, contributing]
+    scan_keys: [languages, frameworks, scripts, entry_points, packages, env_vars, tests, infra]
+
+  - id: architecture
+    title: Architecture
+    audience: developer
+    description: "Components, data flow, Mermaid diagrams, and an ADR-style decision log."
+    sources_to_scan: [entry_points, packages, "src/**", "app/**", "docker-compose*", "k8s/**", "docs/adr/**", "docs/decisions/**"]
+    required_inputs: []
+    template: architecture.md
+    est_pages: "4-10"
+    requires_ui: false
+    depends_on: [data-model, api-reference, cicd-deployment]
+    scan_keys: [frameworks, project_type, packages, entry_points, database, infra, third_party]
+
+  - id: api-reference
+    title: API Reference
+    audience: developer
+    description: "Auth, endpoints, request/response examples and error codes (OpenAPI first, else routes)."
+    sources_to_scan: [openapi, routes, "**/schemas/**", "**/dto/**", "**/middleware/**auth*"]
+    required_inputs:
+      - {key: api_base_url, question: "Public base URL of the API?", type: text, default: "http://localhost:<port>"}
+    template: api-reference.md
+    est_pages: "3-20"
+    requires_ui: false
+    depends_on: [integration-guide, data-model]
+    scan_keys: [openapi, routes]
+
+  - id: data-model
+    title: Data Model
+    audience: developer
+    description: "ERD from schema/migrations/ORM models, fields, indexes and relationships."
+    sources_to_scan: [database, "prisma/schema.prisma", "**/models/**", "**/migrations/**", "**/entities/**", "db/schema.rb"]
+    required_inputs: []
+    template: data-model.md
+    est_pages: "2-8"
+    requires_ui: false
+    depends_on: [architecture]
+    scan_keys: [database]
+
+  - id: contributing
+    title: Contributing Guide
+    audience: developer
+    description: "Branching, commit style, PR checklist, code style and review, inferred from config and history."
+    sources_to_scan: [CONTRIBUTING*, ".github/PULL_REQUEST_TEMPLATE*", ".eslintrc*", "eslint.config.*", ".prettierrc*", "ruff.toml", "pyproject.toml", ".pre-commit-config.yaml", ".editorconfig", "git log --oneline -50", ci]
+    required_inputs: []
+    template: contributing.md
+    est_pages: "2-4"
+    requires_ui: false
+    depends_on: [dev-guide, testing-strategy]
+    scan_keys: [ci, docs, git, scripts]
+
+  - id: testing-strategy
+    title: Testing Strategy
+    audience: developer
+    description: "Test layers, frameworks, locations, coverage, how to run and what to add."
+    sources_to_scan: [tests, "jest.config*", "vitest.config*", "pytest.ini", "pyproject.toml", "playwright.config*", "cypress.config*", ".coveragerc", ci]
+    required_inputs:
+      - {key: coverage_target, question: "Target coverage %?", type: number, default: unknown}
+    template: testing-strategy.md
+    est_pages: "2-4"
+    requires_ui: false
+    depends_on: [cicd-deployment, dev-guide]
+    scan_keys: [tests, ci, scripts]
+
+  - id: cicd-deployment
+    title: CI/CD and Deployment
+    audience: developer
+    description: "Pipelines, environments, release process and rollback."
+    sources_to_scan: [ci, infra, Dockerfile*, "docker-compose*", "*.tf", "k8s/**", "helm/**", "vercel.json", "netlify.toml", "fly.toml", "Procfile"]
+    required_inputs:
+      - {key: environments, question: "Environments (e.g. dev, staging, prod)?", type: list, default: unknown}
+      - {key: hosting, question: "Where is it hosted?", type: text, default: unknown}
+    template: cicd-deployment.md
+    est_pages: "3-5"
+    requires_ui: false
+    depends_on: [runbook, env-config-reference]
+    scan_keys: [ci, infra, scripts]
+
+  - id: env-config-reference
+    title: Environment and Configuration Reference
+    audience: developer
+    description: "Env vars, config files and feature flags: names, types, purpose, required. Never values."
+    sources_to_scan: [env_vars, ".env.example", ".env.sample", "config/**", "**/settings.py", "**/config.*"]
+    required_inputs: []
+    template: env-config-reference.md
+    est_pages: "2-5"
+    requires_ui: false
+    depends_on: [dev-guide, third-party-services]
+    scan_keys: [env_vars, infra]
+
+  - id: security-threat-model
+    title: Security Threat Model
+    audience: developer
+    description: "Assets, trust boundaries, STRIDE table and mitigations."
+    sources_to_scan: [routes, "**/middleware/**", "**/auth/**", env_vars, infra, dependencies, "SECURITY*"]
+    required_inputs:
+      - {key: sensitive_data, question: "What sensitive data does the system handle (PII, payments, health)?", type: multi, choices: [PII, payments, health, credentials, none], default: unknown}
+    template: security-threat-model.md
+    est_pages: "3-6"
+    requires_ui: false
+    depends_on: [architecture, privacy-data-handling]
+    scan_keys: [routes, openapi, infra, third_party, env_vars]
+
+  - id: dependency-inventory
+    title: Dependency Inventory
+    audience: developer
+    description: "Direct dependencies, versions, licences, and outdated or risky flags."
+    sources_to_scan: [dependencies, "package-lock.json", "poetry.lock", "uv.lock", "go.sum", "Cargo.lock"]
+    required_inputs: []
+    template: dependency-inventory.md
+    est_pages: "2-6"
+    requires_ui: false
+    depends_on: [security-threat-model]
+    scan_keys: [dependencies]
+
+  - id: tech-debt-register
+    title: Tech Debt Register
+    audience: developer
+    description: "Known debt items with impact, effort, priority and suggested fix."
+    sources_to_scan: ["grep: TODO|FIXME|HACK|XXX|shortcut:", dependencies, tests]
+    required_inputs: []
+    template: tech-debt-register.md
+    est_pages: "2-4"
+    requires_ui: false
+    depends_on: [risk-register]
+    scan_keys: [dependencies, tests]
+
+  - id: integration-guide
+    title: Integration Guide
+    audience: developer
+    description: "How external developers integrate: auth flow, webhooks, rate limits, SDK snippets, versioning."
+    sources_to_scan: [openapi, routes, "**/webhooks/**", "**/middleware/**rate*", "sdk/**", "clients/**"]
+    required_inputs:
+      - {key: api_base_url, question: "Public base URL of the API?", type: text, default: "http://localhost:<port>"}
+      - {key: rate_limits, question: "Published rate limits?", type: text, default: unknown}
+    template: integration-guide.md
+    est_pages: "3-6"
+    requires_ui: false
+    depends_on: [api-reference]
+    scan_keys: [openapi, routes, third_party]
+
+  - id: upgrade-migration-guide
+    title: Upgrade and Migration Guide
+    audience: developer
+    description: "Breaking changes between versions and step-by-step upgrade instructions."
+    sources_to_scan: [CHANGELOG*, "git tags", "git log --oneline", database, "**/migrations/**"]
+    required_inputs:
+      - {key: from_version, question: "Upgrade from which version?", type: text, default: "previous tag"}
+    template: upgrade-migration-guide.md
+    est_pages: "2-4"
+    requires_ui: false
+    depends_on: [release-notes]
+    scan_keys: [git, database, docs]
+
+  # ---------------------------------------------------------------- ops
+  - id: runbook
+    title: Runbook
+    audience: ops
+    description: "Start/stop, health checks, routine tasks and common fixes."
+    sources_to_scan: [scripts, infra, "docker-compose*", "k8s/**", "Procfile", routes]
+    required_inputs:
+      - {key: hosting, question: "Where is it hosted?", type: text, default: unknown}
+      - {key: oncall_contact, question: "On-call contact or rota?", type: text, default: unknown}
+    template: runbook.md
+    est_pages: "3-6"
+    requires_ui: false
+    depends_on: [incident-response, monitoring-slos, troubleshooting-faq]
+    scan_keys: [scripts, infra, ci, routes]
+
+  - id: incident-response
+    title: Incident Response
+    audience: ops
+    description: "Severity levels, roles, comms, escalation and a postmortem template."
+    sources_to_scan: [infra, "docs/**/incident*", "docs/**/postmortem*"]
+    required_inputs:
+      - {key: oncall_contact, question: "On-call contact or rota?", type: text, default: unknown}
+      - {key: status_page, question: "Status page or comms channel?", type: text, default: unknown}
+    template: incident-response.md
+    est_pages: "3-5"
+    requires_ui: false
+    depends_on: [runbook, monitoring-slos]
+    scan_keys: [infra]
+
+  - id: monitoring-slos
+    title: Monitoring and SLOs
+    audience: ops
+    description: "Signals, dashboards, alerts, SLIs/SLOs and error budgets."
+    sources_to_scan: [third_party, "**/health*", "**/metrics*", "prometheus*", "grafana/**", "datadog*", "sentry*", "otel*"]
+    required_inputs:
+      - {key: slo_targets, question: "Availability / latency targets?", type: text, default: unknown}
+    template: monitoring-slos.md
+    est_pages: "2-4"
+    requires_ui: false
+    depends_on: [runbook, support-sla]
+    scan_keys: [third_party, routes, infra]
+
+  - id: backup-dr
+    title: Backup and Disaster Recovery
+    audience: ops
+    description: "What is backed up, how often, RPO/RTO, and restore procedures."
+    sources_to_scan: [database, infra, "*.tf", "k8s/**", "scripts/**backup*"]
+    required_inputs:
+      - {key: rpo_rto, question: "Target RPO / RTO?", type: text, default: unknown}
+    template: backup-dr.md
+    est_pages: "2-4"
+    requires_ui: false
+    depends_on: [runbook, data-model]
+    scan_keys: [database, infra]
+
+  - id: troubleshooting-faq
+    title: Troubleshooting and FAQ
+    audience: ops
+    description: "Symptoms, causes and fixes for common problems, plus frequent questions."
+    sources_to_scan: ["**/errors*", "**/exceptions*", README*, "docs/**/faq*", "GitHub issues (if available)"]
+    required_inputs: []
+    template: troubleshooting-faq.md
+    est_pages: "2-4"
+    requires_ui: false
+    depends_on: [runbook, dev-guide]
+    scan_keys: [routes, env_vars, scripts]
+
+  - id: third-party-services
+    title: Third-Party Services Inventory
+    audience: ops
+    description: "External services used, env vars, owner, plan/cost and what breaks if each is down."
+    sources_to_scan: [third_party, env_vars, dependencies, infra]
+    required_inputs:
+      - {key: service_owners, question: "Who owns the vendor accounts?", type: text, default: unknown}
+    template: third-party-services.md
+    est_pages: "2-4"
+    requires_ui: false
+    depends_on: [env-config-reference, budget-resources]
+    scan_keys: [third_party, env_vars, dependencies]
+
+  # ---------------------------------------------------------------- user
+  - id: user-guide
+    title: User Guide
+    audience: user
+    description: "Task-oriented guide for end users (CLI/API usage when there is no UI)."
+    sources_to_scan: [routes, "src/**/pages/**", "app/**/page.*", "src/**/screens/**", "lib/**/screens/**", README*, entry_points]
+    required_inputs:
+      - {key: target_users, question: "Who are the end users?", type: text, default: unknown}
+    template: user-guide.md
+    est_pages: "4-10"
+    requires_ui: true
+    depends_on: [quick-start, troubleshooting-faq]
+    scan_keys: [routes, has_ui, entry_points, scripts]
+
+  - id: quick-start
+    title: Quick Start
+    audience: user
+    description: "Get from zero to first success in five minutes."
+    sources_to_scan: [README*, entry_points, scripts, routes]
+    required_inputs: []
+    template: quick-start.md
+    est_pages: "1-2"
+    requires_ui: true
+    depends_on: [user-guide]
+    scan_keys: [entry_points, scripts, has_ui]
+
+  - id: admin-guide
+    title: Admin Guide
+    audience: user
+    description: "Admin tasks: users and roles, settings, maintenance."
+    sources_to_scan: ["**/admin/**", "**/roles*", "**/permissions*", routes, env_vars]
+    required_inputs: []
+    template: admin-guide.md
+    est_pages: "2-5"
+    requires_ui: false
+    depends_on: [user-guide, env-config-reference]
+    scan_keys: [routes, env_vars]
+
+  - id: release-notes
+    title: Release Notes
+    audience: user
+    description: "What changed per version, from tags, git log and CHANGELOG."
+    sources_to_scan: [CHANGELOG*, "git tags", "git log --oneline"]
+    required_inputs: []
+    template: release-notes.md
+    est_pages: "1-4"
+    requires_ui: false
+    depends_on: [upgrade-migration-guide]
+    scan_keys: [git, docs]
+
+  - id: onboarding-deck-outline
+    title: Onboarding Deck Outline
+    audience: user
+    description: "Slide-by-slide outline for onboarding new team members or customers."
+    sources_to_scan: [README*, scan.json]
+    required_inputs:
+      - {key: onboarding_audience, question: "Deck audience?", type: choice, choices: [new engineers, customers, internal staff], default: new engineers}
+    template: onboarding-deck-outline.md
+    est_pages: "2-3"
+    requires_ui: false
+    depends_on: [dev-guide, user-guide]
+    scan_keys: [project, frameworks]
+
+  # ---------------------------------------------------------------- governance
+  - id: privacy-data-handling
+    title: Privacy and Data Handling
+    audience: governance
+    description: "Data inventory, purposes, retention, subprocessors and rights handling. Template, not legal advice."
+    sources_to_scan: [database, third_party, "**/analytics*", "**/logging*"]
+    required_inputs:
+      - {key: sensitive_data, question: "Sensitive data handled?", type: multi, choices: [PII, payments, health, credentials, none], default: unknown}
+      - {key: data_regions, question: "Where is data stored (regions)?", type: text, default: unknown}
+      - {key: retention_policy, question: "Retention periods?", type: text, default: unknown}
+    template: privacy-data-handling.md
+    est_pages: "3-5"
+    requires_ui: false
+    depends_on: [data-model, third-party-services, compliance-checklist]
+    scan_keys: [database, third_party]
+
+  - id: compliance-checklist
+    title: Compliance Checklist
+    audience: governance
+    description: "GDPR / SOC 2 / HIPAA checklists with repo evidence. Template, not legal advice."
+    sources_to_scan: [ci, infra, "**/auth/**", "SECURITY*", database, third_party]
+    required_inputs:
+      - {key: compliance_frameworks, question: "Which compliance frameworks?", type: multi, choices: [GDPR, SOC 2, HIPAA], default: [GDPR]}
+    template: compliance-checklist.md
+    est_pages: "3-8"
+    requires_ui: false
+    depends_on: [privacy-data-handling, security-threat-model]
+    scan_keys: [ci, infra, database, third_party]
+
+  - id: support-sla
+    title: Support and SLA
+    audience: governance
+    description: "Support tiers, hours, response/resolution targets and escalation. Template, not legal advice."
+    sources_to_scan: [README*, "SUPPORT*", ".github/ISSUE_TEMPLATE/**"]
+    required_inputs:
+      - {key: support_hours, question: "Support hours and timezone?", type: text, default: unknown}
+      - {key: support_channels, question: "Support channels (email, chat, portal)?", type: list, default: unknown}
+      - {key: slo_targets, question: "Availability target?", type: text, default: unknown}
+    template: support-sla.md
+    est_pages: "2-3"
+    requires_ui: false
+    depends_on: [incident-response, monitoring-slos]
+    scan_keys: [docs]
+
+  - id: handover
+    title: Handover Document
+    audience: governance
+    description: "Everything a new team needs to take over: state, access, knowledge, open issues."
+    sources_to_scan: [scan.json, README*, CODEOWNERS, "git log --since=3.months", "grep: TODO|FIXME"]
+    required_inputs:
+      - {key: handover_from, question: "Handing over from (team/person)?", type: text, default: unknown}
+      - {key: handover_to, question: "Handing over to?", type: text, default: unknown}
+      - {key: access_list, question: "Accounts/access that must be transferred?", type: list, default: unknown}
+    template: handover.md
+    est_pages: "4-8"
+    requires_ui: false
+    depends_on: [dev-guide, architecture, runbook, third-party-services, tech-debt-register]
+    scan_keys: [project, frameworks, infra, ci, third_party, git]

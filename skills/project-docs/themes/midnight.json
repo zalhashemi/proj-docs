@@ -1,0 +1,33 @@
+{
+  "name": "midnight",
+  "label": "Midnight",
+  "colors": {
+    "primary": "#4338ca",
+    "secondary": "#0e7490",
+    "accent": "#be185d",
+    "bg": "#ffffff",
+    "surface": "#f5f7fb",
+    "text": "#111827",
+    "muted": "#4b5563",
+    "border": "#e5e7eb",
+    "success": "#15803d",
+    "warning": "#b45309",
+    "danger": "#b91c1c"
+  },
+  "cover": {
+    "bg": "#0b1020",
+    "text": "#e5e7eb"
+  },
+  "fonts": {
+    "heading": "Inter",
+    "body": "Inter",
+    "mono": "JetBrains Mono"
+  },
+  "logo": null,
+  "meta": {
+    "sources": {},
+    "adjustments": [],
+    "dark_mode_mapped": false,
+    "substitutions": []
+  }
+}

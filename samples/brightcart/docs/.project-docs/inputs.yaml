@@ -1,0 +1,25 @@
+# Sample answers used to demonstrate the skill. Not real BrightCart figures.
+org_name: BrightCart
+currency: EUR
+forecast_start: 2027-01
+starting_users: 2500
+monthly_growth_pct: 3-9
+infra_cost_per_user: 0.02
+fixed_infra_cost: 120
+revenue_model: usage-based
+arpu: 4
+paid_conversion_pct: 2-5
+budget_start: 2027-01
+team_roles:
+  - Frontend developer, 100%, 7500
+  - Product designer, 40%, 6500
+  - Product manager, 20%, 9000
+tooling_costs:
+  - Vercel Pro, 20
+  - Sentry Team, 26
+  - GitHub Team, 16
+one_time_costs:
+  - Accessibility audit, 4000, 2027-03
+  - Product photography, 2500
+contingency_pct: 15
+target_users: Independent makers selling handmade goods, and their customers

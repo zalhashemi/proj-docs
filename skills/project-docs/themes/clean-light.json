@@ -1,0 +1,29 @@
+{
+  "name": "clean-light",
+  "label": "Clean Light",
+  "colors": {
+    "primary": "#2563eb",
+    "secondary": "#0f766e",
+    "accent": "#7c3aed",
+    "bg": "#ffffff",
+    "surface": "#f8fafc",
+    "text": "#0f172a",
+    "muted": "#64748b",
+    "border": "#e2e8f0",
+    "success": "#15803d",
+    "warning": "#b45309",
+    "danger": "#b91c1c"
+  },
+  "fonts": {
+    "heading": "Inter",
+    "body": "Inter",
+    "mono": "JetBrains Mono"
+  },
+  "logo": null,
+  "meta": {
+    "sources": {},
+    "adjustments": [],
+    "dark_mode_mapped": false,
+    "substitutions": []
+  }
+}

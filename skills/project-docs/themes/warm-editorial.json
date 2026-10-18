@@ -1,0 +1,29 @@
+{
+  "name": "warm-editorial",
+  "label": "Warm Editorial",
+  "colors": {
+    "primary": "#9a3412",
+    "secondary": "#78350f",
+    "accent": "#b45309",
+    "bg": "#fffdf8",
+    "surface": "#faf5ec",
+    "text": "#292524",
+    "muted": "#57534e",
+    "border": "#e7e5e4",
+    "success": "#3f6212",
+    "warning": "#a16207",
+    "danger": "#991b1b"
+  },
+  "fonts": {
+    "heading": "Fraunces",
+    "body": "Source Serif 4",
+    "mono": "JetBrains Mono"
+  },
+  "logo": null,
+  "meta": {
+    "sources": {},
+    "adjustments": [],
+    "dark_mode_mapped": false,
+    "substitutions": []
+  }
+}

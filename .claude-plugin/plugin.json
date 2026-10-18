@@ -1,0 +1,13 @@
+{
+  "name": "project-docs",
+  "version": "1.0.0",
+  "description": "Generate branded PDF project documentation (dev guide, architecture, API reference, runbook, user guide, forecast, budget and 30 more) from a real codebase, styled with the project's own colours, fonts and logo. Updates only what changed.",
+  "author": {
+    "name": "Zain Alhashemi",
+    "url": "https://github.com/zalhashemi"
+  },
+  "homepage": "https://github.com/zalhashemi/proj-docs",
+  "repository": "https://github.com/zalhashemi/proj-docs",
+  "license": "MIT",
+  "keywords": ["documentation", "pdf", "docs", "runbook", "architecture", "api-reference", "handover", "branding"]
+}

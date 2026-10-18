@@ -1,0 +1,15 @@
+stages: [test, deploy]
+
+test:
+  stage: test
+  image: python:3.12
+  script:
+    - pip install .[dev]
+    - ruff check .
+    - pytest --cov=app
+
+deploy:
+  stage: deploy
+  script:
+    - ./scripts/deploy.sh
+  only: [main]

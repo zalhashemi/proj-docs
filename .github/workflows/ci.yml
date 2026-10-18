@@ -1,0 +1,65 @@
+name: CI
+on:
+  push:
+  pull_request:
+
+env:
+  PYTHONUTF8: "1"   # tests write non-ASCII fixtures; scripts set encodings explicitly
+
+jobs:
+  test:
+    name: ${{ matrix.os }} / py${{ matrix.python }} / ${{ matrix.renderer }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - {os: ubuntu-latest, python: "3.9", renderer: weasyprint}
+          - {os: ubuntu-latest, python: "3.12", renderer: weasyprint}
+          - {os: ubuntu-latest, python: "3.12", renderer: chromium}
+          - {os: macos-latest, python: "3.12", renderer: chromium}
+          - {os: windows-latest, python: "3.12", renderer: chromium}
+    env:
+      PROJECT_DOCS_TEST_RENDERER: ${{ matrix.renderer }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python }}
+      - name: Pango for WeasyPrint
+        if: matrix.renderer == 'weasyprint'
+        run: sudo apt-get update && sudo apt-get install -y libpango-1.0-0 libpangoft2-1.0-0
+      - name: Python dependencies
+        run: python -m pip install -r skills/project-docs/requirements.txt
+      - name: Chromium
+        if: matrix.renderer == 'chromium'
+        run: python -m playwright install --with-deps chromium
+      - name: mermaid-cli
+        if: matrix.renderer == 'chromium' && matrix.os == 'ubuntu-latest'
+        run: npm install -g @mermaid-js/mermaid-cli
+      - name: Bootstrap check
+        run: python skills/project-docs/scripts/bootstrap.py
+      - name: Tests
+        run: python -m pytest tests -q -rs --junitxml=report.xml
+      - name: Render and verify the samples
+        shell: bash
+        run: |
+          for p in brightcart ledgerline; do
+            python skills/project-docs/scripts/build_pdf.py samples/$p/docs/*.md --out out/$p --renderer ${{ matrix.renderer }}
+            python skills/project-docs/scripts/verify_pdf.py out/$p/*.pdf --theme samples/$p/docs/.project-docs/theme.json --preview-dir out/$p/preview
+          done
+      - name: Annotate failures
+        if: failure() && hashFiles('report.xml') != ''
+        shell: python
+        run: |
+          import xml.etree.ElementTree as ET
+          for case in ET.parse("report.xml").iter("testcase"):
+              for bad in list(case.iter("failure")) + list(case.iter("error")):
+                  msg = (bad.get("message") or "").replace("\n", " ")[:400]
+                  print(f"::error title={case.get('name')}::{msg}")
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: pdfs-${{ matrix.os }}-${{ matrix.python }}-${{ matrix.renderer }}
+          path: out/
+          if-no-files-found: ignore

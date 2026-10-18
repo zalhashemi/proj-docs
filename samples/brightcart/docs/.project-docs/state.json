@@ -1,0 +1,275 @@
+{
+  "version": 1,
+  "stage": "complete",
+  "docs": {
+    "architecture": {
+      "scan_keys": [
+        "frameworks",
+        "project_type",
+        "packages",
+        "entry_points",
+        "database",
+        "infra",
+        "third_party"
+      ],
+      "scan_hash": "7438099dce1894a0",
+      "md_hash": "5f0af03e88d86623",
+      "version": "1.0.0",
+      "recorded": "2026-10-18"
+    },
+    "budget-resources": {
+      "scan_keys": [
+        "infra",
+        "third_party",
+        "git"
+      ],
+      "scan_hash": "1cf958f098f6cceb",
+      "md_hash": "088d7d7a1a36c8cd",
+      "version": "1.0.0",
+      "recorded": "2026-10-18"
+    },
+    "dev-guide": {
+      "scan_keys": [
+        "languages",
+        "frameworks",
+        "scripts",
+        "entry_points",
+        "packages",
+        "env_vars",
+        "tests",
+        "infra"
+      ],
+      "scan_hash": "59053e0ace998056",
+      "md_hash": "390ca8c3b2c88ba7",
+      "version": "1.0.0",
+      "recorded": "2026-10-18"
+    },
+    "forecast-1yr": {
+      "scan_keys": [
+        "infra",
+        "third_party"
+      ],
+      "scan_hash": "c19779ba5beefc2e",
+      "md_hash": "5ea79ffddf0871aa",
+      "version": "1.0.0",
+      "recorded": "2026-10-18"
+    },
+    "user-guide": {
+      "scan_keys": [
+        "routes",
+        "has_ui",
+        "entry_points",
+        "scripts"
+      ],
+      "scan_hash": "5fa01e60b4cb3755",
+      "md_hash": "0d3df090e2b5e72d",
+      "version": "1.0.0",
+      "recorded": "2026-10-18"
+    }
+  },
+  "scan_snapshot": {
+    "project": {
+      "name": "brightcart",
+      "version": "1.4.0",
+      "description": "BrightCart: a small storefront for independent makers.",
+      "license": null,
+      "file_count": 19,
+      "code_files": 7
+    },
+    "languages": {
+      "TypeScript": 6,
+      "HTML": 1,
+      "CSS": 1,
+      "JavaScript": 1
+    },
+    "frameworks": [
+      "React",
+      "Tailwind CSS",
+      "Vite"
+    ],
+    "project_type": {
+      "primary": "web app",
+      "all": [
+        "web app"
+      ],
+      "evidence": [
+        "frontend: React"
+      ]
+    },
+    "packages": [],
+    "entry_points": [
+      {
+        "kind": "file",
+        "target": "src/App.tsx"
+      },
+      {
+        "kind": "file",
+        "target": "src/main.tsx"
+      }
+    ],
+    "scripts": [
+      {
+        "source": "package.json",
+        "name": "dev",
+        "command": "vite"
+      },
+      {
+        "source": "package.json",
+        "name": "build",
+        "command": "tsc -b && vite build"
+      },
+      {
+        "source": "package.json",
+        "name": "preview",
+        "command": "vite preview"
+      },
+      {
+        "source": "package.json",
+        "name": "lint",
+        "command": "eslint ."
+      },
+      {
+        "source": "package.json",
+        "name": "test",
+        "command": "vitest run"
+      }
+    ],
+    "openapi": [],
+    "routes": [],
+    "database": {
+      "engines": [],
+      "schema_files": [],
+      "migrations": [],
+      "orms": [],
+      "models": []
+    },
+    "infra": {
+      "dockerfiles": [],
+      "compose": [],
+      "compose_images": [],
+      "kubernetes": [],
+      "terraform": {
+        "files": [],
+        "resource_types": []
+      },
+      "platform_configs": [
+        "vercel.json"
+      ]
+    },
+    "ci": [
+      {
+        "system": "GitHub Actions",
+        "file": ".github/workflows/ci.yml",
+        "secrets": [
+          "VERCEL_TOKEN"
+        ],
+        "name": "CI",
+        "triggers": [
+          "pull_request",
+          "push"
+        ],
+        "jobs": [
+          "deploy",
+          "test"
+        ]
+      }
+    ],
+    "tests": {
+      "frameworks": [
+        "Vitest",
+        "Testing Library"
+      ],
+      "files": 1,
+      "cases_approx": 2,
+      "locations": {
+        "src": 1
+      },
+      "coverage_config": []
+    },
+    "env_vars": [
+      {
+        "name": "VITE_API_URL",
+        "sources": [
+          ".env.example",
+          "src/pages/Home.tsx"
+        ],
+        "in_example": true
+      },
+      {
+        "name": "VITE_SENTRY_DSN",
+        "sources": [
+          ".env.example",
+          "src/main.tsx"
+        ],
+        "in_example": true
+      },
+      {
+        "name": "VITE_STRIPE_PUBLISHABLE_KEY",
+        "sources": [
+          ".env.example",
+          "src/pages/Checkout.tsx"
+        ],
+        "in_example": true
+      }
+    ],
+    "dependencies": [
+      {
+        "ecosystem": "npm",
+        "manifest": "package.json",
+        "name": "brightcart",
+        "runtime": {
+          "react": "^18.3.1",
+          "react-dom": "^18.3.1",
+          "react-router-dom": "^6.26.0",
+          "@sentry/react": "^8.30.0",
+          "@stripe/stripe-js": "^4.5.0"
+        },
+        "dev": {
+          "@testing-library/react": "^16.0.1",
+          "@vitejs/plugin-react": "^4.3.1",
+          "eslint": "^9.10.0",
+          "tailwindcss": "^3.4.10",
+          "typescript": "^5.5.4",
+          "vite": "^5.4.3",
+          "vitest": "^2.0.5"
+        }
+      }
+    ],
+    "third_party": [
+      {
+        "service": "Sentry",
+        "evidence": [
+          "dependency @sentry/react (package.json)"
+        ]
+      },
+      {
+        "service": "Stripe",
+        "evidence": [
+          "dependency @stripe/stripe-js (package.json)"
+        ]
+      }
+    ],
+    "docs": {
+      "readme": "README.md",
+      "changelog": "CHANGELOG.md",
+      "license": null,
+      "license_type": null,
+      "contributing": null,
+      "security": null,
+      "codeowners": null,
+      "docs_dir_files": 0
+    },
+    "git": {
+      "is_repo": false
+    },
+    "has_ui": true,
+    "ui_evidence": [
+      "framework: React",
+      "6 .tsx files",
+      "HTML templates: index.html"
+    ],
+    "stage_hint": "active",
+    "stage_evidence": "7 code files, 0 commits"
+  },
+  "scan_hash": "9753946ee43d96be"
+}

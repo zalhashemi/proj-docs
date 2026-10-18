@@ -1,0 +1,29 @@
+{
+  "name": "corporate-blue",
+  "label": "Corporate Blue",
+  "colors": {
+    "primary": "#1e3a8a",
+    "secondary": "#1d4ed8",
+    "accent": "#0e7490",
+    "bg": "#ffffff",
+    "surface": "#f1f5f9",
+    "text": "#1f2937",
+    "muted": "#4b5563",
+    "border": "#cbd5e1",
+    "success": "#166534",
+    "warning": "#a16207",
+    "danger": "#991b1b"
+  },
+  "fonts": {
+    "heading": "Inter",
+    "body": "Inter",
+    "mono": "JetBrains Mono"
+  },
+  "logo": null,
+  "meta": {
+    "sources": {},
+    "adjustments": [],
+    "dark_mode_mapped": false,
+    "substitutions": []
+  }
+}

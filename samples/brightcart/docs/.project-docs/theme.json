@@ -1,0 +1,135 @@
+{
+  "name": "brightcart-detected",
+  "label": "brightcart (detected)",
+  "colors": {
+    "primary": "#0f766e",
+    "secondary": "#c35305",
+    "accent": "#8b5cf6",
+    "bg": "#ffffff",
+    "surface": "#f8fafc",
+    "text": "#1e293b",
+    "border": "#e2e8f0",
+    "danger": "#e11d48",
+    "muted": "#838993",
+    "success": "#15803d",
+    "warning": "#b45309"
+  },
+  "fonts": {
+    "heading": "Fraunces",
+    "body": "Inter",
+    "mono": "JetBrains Mono"
+  },
+  "logo": "public/logo.svg",
+  "meta": {
+    "detected": true,
+    "sources": {
+      "primary": {
+        "source": "tailwind.config.js",
+        "token": "theme-extend-colors-brand-DEFAULT",
+        "confidence": "high"
+      },
+      "secondary": {
+        "source": "tailwind.config.js",
+        "token": "theme-extend-colors-secondary",
+        "confidence": "high"
+      },
+      "accent": {
+        "source": "tailwind.config.js",
+        "token": "theme-extend-colors-accent",
+        "confidence": "high"
+      },
+      "bg": {
+        "source": "src/index.css",
+        "token": "background",
+        "confidence": "high"
+      },
+      "surface": {
+        "source": "src/index.css",
+        "token": "surface",
+        "confidence": "high"
+      },
+      "text": {
+        "source": "tailwind.config.js",
+        "token": "theme-extend-colors-ink",
+        "confidence": "high"
+      },
+      "border": {
+        "source": "src/index.css",
+        "token": "border",
+        "confidence": "high"
+      },
+      "danger": {
+        "source": "tailwind.config.js",
+        "token": "theme-extend-colors-danger",
+        "confidence": "high"
+      },
+      "muted": {
+        "source": "derived",
+        "confidence": "low"
+      },
+      "success": {
+        "source": "derived",
+        "confidence": "low"
+      },
+      "warning": {
+        "source": "derived",
+        "confidence": "low"
+      },
+      "font_body": {
+        "source": "tailwind.config.js",
+        "confidence": "high"
+      },
+      "font_heading": {
+        "source": "tailwind.config.js",
+        "confidence": "high"
+      },
+      "font_mono": {
+        "source": "default",
+        "confidence": "low"
+      }
+    },
+    "adjustments": [
+      {
+        "role": "primary",
+        "from": "#14b8a6",
+        "to": "#0f766e",
+        "against": "#ffffff",
+        "ratio_before": 2.49,
+        "ratio_after": 5.47,
+        "flagged": false
+      },
+      {
+        "role": "secondary",
+        "from": "#f97316",
+        "to": "#c35305",
+        "against": "#ffffff",
+        "ratio_before": 2.8,
+        "ratio_after": 4.61,
+        "flagged": false
+      }
+    ],
+    "dark_mode_mapped": false,
+    "substitutions": [
+      {
+        "role": "heading",
+        "requested": "Playfair Display",
+        "used": "Fraunces",
+        "reason": "not bundled and not installed locally"
+      },
+      {
+        "role": "body",
+        "requested": "Poppins",
+        "used": "Inter",
+        "reason": "not bundled and not installed locally"
+      }
+    ],
+    "notes": [],
+    "logo_dominant": "#14b8a6",
+    "ui_detected": true,
+    "ui_evidence": [
+      "framework: React",
+      "6 .tsx files",
+      "HTML templates: index.html"
+    ]
+  }
+}
