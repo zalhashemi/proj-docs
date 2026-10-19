@@ -1,13 +1,14 @@
 #!/usr/bin/env python3
-"""Render project-docs Markdown into branded PDFs (one per document, or a combined pack).
+"""Render project-docs pack Markdown into branded PDFs (one per pack, or all packs combined).
 
 Markdown (tables, fenced code, footnotes, callouts, task lists, front matter) -> HTML -> PDF.
 WeasyPrint is the default renderer; --renderer chromium uses Playwright. If the chosen
 renderer is unavailable the other one is used and a warning says why.
 
 Usage:
-  build_pdf.py docs/dev-guide.md [more.md ...] [--theme docs/.project-docs/theme.json] [--out docs/pdf/]
+  build_pdf.py docs/developer.md [more.md ...] [--theme docs/.project-docs/theme.json] [--out docs/pdf/]
   build_pdf.py docs/*.md --combine [--out docs/pdf/docs-pack.pdf]
+A pack's `# Chapter` headings start new pages and form the top level of its contents.
 Prints JSON: {"outputs": [...], "renderer": "...", "pages": {...}, "warnings": [...]}
 """
 from __future__ import annotations
@@ -63,15 +64,32 @@ def font_stack(name: str, role: str) -> str:
     return f'"{name}", {fallback}'
 
 
-def theme_vars(theme: dict, page_size: str) -> str:
+PACK_ORDER = ["planning", "developer", "business", "user", "ops", "handover"]
+
+
+def pack_color(theme: dict, pack: str | None) -> str:
+    """A pack's colour from the theme's `packs` map; brand themes without one use primary."""
+    return (theme.get("packs") or {}).get(pack or "", theme["colors"]["primary"])
+
+
+def spectrum(theme: dict) -> list[str]:
+    """Cover strip colours, one per pack; tints of primary when the theme has no `packs` map."""
+    if theme.get("packs"):
+        return [pack_color(theme, k) for k in PACK_ORDER]
+    return [mix(theme["colors"]["primary"], "#ffffff", t) for t in (0.6, 0, 0.45, 0.3, 0.15, 0.75)]
+
+
+def theme_vars(theme: dict, page_size: str, pack: str | None = None) -> str:
     c = theme["colors"]
-    cover = theme.get("cover") or {"bg": c["primary"], "text": "#ffffff"}
+    cover = theme.get("cover") or {"bg": pack_color(theme, pack), "text": "#ffffff"}
     v = {**{k: val for k, val in c.items()},
          "cover-bg": cover["bg"], "cover-text": cover["text"],
          "font-heading": font_stack(theme["fonts"]["heading"], "heading"),
          "font-body": font_stack(theme["fonts"]["body"], "body"),
          "font-mono": font_stack(theme["fonts"]["mono"], "mono"),
-         "page-h": f"{PAGE_SIZES[page_size][1] - 1}mm"}
+         "page-h": f"{PAGE_SIZES[page_size][1] - 1}mm",
+         "content-h": f"{PAGE_SIZES[page_size][1] - 22 - 20 - 4}mm",  # page minus @page margins, with slack
+         "pack": pack_color(theme, pack), "pack-tint": mix(pack_color(theme, pack), "#ffffff", 0.9)}
     for role in ("primary", "accent", "success", "warning", "danger"):
         v[f"{role}-tint"] = mix(c[role], "#ffffff", 0.9)
     return ":root {\n" + "\n".join(f"  --{k}: {val};" for k, val in v.items()) + "\n}"
@@ -81,30 +99,59 @@ def _css_str(s: str) -> str:
     return '"' + str(s).replace("\\", "\\\\").replace('"', '\\"').replace("\n", " ") + '"'
 
 
-def page_css(theme: dict, page_size: str, project: str, named: list[tuple[str, str]], confidential: bool) -> str:
+def page_css(theme: dict, page_size: str, project: str, named: list[tuple], confidential: bool,
+             pack: str | None = None, pack_title: str = "") -> str:
+    """`named`: (page name, running title[, chapter number]); a number adds the chapter band."""
     c = theme["colors"]
-    box = f'font-family: {font_stack(theme["fonts"]["body"], "body")}; font-size: 7.5pt; color: {c["muted"]};'
+    box = f'font-family: {font_stack(theme["fonts"]["heading"], "heading")}; font-size: 7.5pt; color: {c["muted"]};'
+    head = "vertical-align: bottom; padding-bottom: 2mm; margin-bottom: 7mm;"
     blank = " ".join(f"@{b} {{ content: none; }}" for b in
                      ("top-left", "top-right", "bottom-left", "bottom-center", "bottom-right"))
     out = [f"""@page {{
   size: {PAGE_SIZES[page_size][0]};
   margin: 22mm 18mm 20mm 18mm;
-  @top-left {{ content: ""; {box} }}
+  @top-right {{ content: ""; {box} {head} }}
   @bottom-left {{ content: {_css_str(project)}; {box} }}
   @bottom-right {{ content: "Page " counter(page) " of " counter(pages); {box} }}
   {f'@bottom-center {{ content: "Confidential"; {box} font-weight: 700; }}' if confidential else ''}
 }}""", f"@page cover {{ margin: 0; {blank} }}",
-           f'@page toc {{ @top-left {{ content: "Contents"; {box} }} }}']
-    for page_name, title in named:
-        out.append(f"@page {page_name} {{ @top-left {{ content: {_css_str(title)}; {box} }} }}")
+           f'@page toc {{ @top-right {{ content: "Contents"; {box} {head} }} }}']
+    for page_name, title, *num in named:
+        if not num:
+            out.append(f"@page {page_name} {{ @top-right {{ content: {_css_str(title)}; {box} {head} }} }}")
+        else:
+            # A full-bleed pack-colour band down the left of every chapter page, drawn with margin boxes
+            # (page content is clipped to its box, so it cannot bleed). A box paints only with content;
+            # the 1pt negative margins overlap neighbours so viewers show no anti-aliased seams.
+            col = pack_color(theme, pack)
+            band = (f"background: {col}; margin-top: -1pt; margin-bottom: -1pt; color: #ffffff; text-align: left; "
+                    f"font-family: {font_stack(theme['fonts']['heading'], 'heading')}; padding: 0 6mm 0 9mm; margin-right: 9mm;")
+            out.append(f"""@page {page_name} {{ margin-left: 58mm;
+  @top-left-corner {{ content: "\\00a0"; {band} }}
+  @left-top {{ content: "{num[0]:02d}"; {band} font-size: 46pt; font-weight: 700; letter-spacing: -0.04em; vertical-align: top; padding-top: 1mm; }}
+  @left-middle {{ content: {_css_str(title)}; {band} font-size: 15pt; font-weight: 700; line-height: 1.15; vertical-align: top; }}
+  @left-bottom {{ content: {_css_str(pack_title)} "\\A" {_css_str(project)}; white-space: pre-line; {band} font-size: 8pt; line-height: 1.45; vertical-align: bottom; padding-bottom: 6mm; }}
+  @bottom-left-corner {{ content: "\\00a0"; {band} }}
+}}""")
         out.append(f"#{page_name} {{ page: {page_name}; }}")
     return "\n".join(out)
 
 
+def chapter_sections(html: str, doc_id: str) -> tuple[str, list[tuple]]:
+    """Wrap each `#` chapter in its own named-page section, so its pages carry its band and number."""
+    parts = re.split(r'(?=<h1\b)', html)
+    out, named = [parts[0]], []
+    for n, part in enumerate(parts[1:], 1):
+        title = htmllib.unescape(re.sub(r"<[^>]+>", "", re.match(r"<h1\b[^>]*>(.*?)</h1>", part, re.S).group(1))).strip()
+        page = f"ch-{doc_id}-{n}"
+        out.append(f'<section class="chapter" id="{page}">{part}</section>')
+        named.append((page, title, n))
+    return "".join(out), named
+
 def load_theme(path: Path | None) -> tuple[dict, Path | None]:
     """Returns (theme, project_root) — the root resolves the theme's relative logo path."""
     if path is None or not Path(path).is_file():
-        return load_json(SKILL_DIR / "themes" / "clean-light.json"), None
+        return load_json(SKILL_DIR / "themes" / "default.json"), None
     path = Path(path).resolve()
     root = path.parents[2] if path.parent.name == ".project-docs" else None
     return load_json(path), root
@@ -422,6 +469,14 @@ def finalize(pdf: Path, title: str, author: str, subject: str, keywords: str) ->
                 page.delete_link(ln)
                 page.insert_link({"kind": fitz.LINK_GOTOR, "from": ln["from"], "page": 0,
                                   "file": Path(target.split("#")[0].replace("file://", "")).name})
+    # Chromium appends margin-box text that matches a heading to its bookmark ("ContentsContents").
+    toc = doc.get_toc(simple=False)
+    for entry in toc:
+        t, h = entry[1], len(entry[1]) // 2
+        if t and t[:h] == t[h:]:
+            entry[1] = t[:h]
+    if toc:
+        doc.set_toc(toc)
     doc.set_metadata({"title": title, "author": author or "", "subject": subject, "keywords": keywords,
                       "creator": "project-docs", "producer": "project-docs"})
     tmp = pdf.with_suffix(".tmp.pdf")
@@ -460,7 +515,7 @@ def _clean(value) -> str:
 
 def load_doc(path: Path, warnings: list, theme: dict | None = None) -> dict:
     fm, body = split_front_matter(path.read_text(encoding="utf-8"))
-    doc_id = re.sub(r"[^\w-]", "-", str(fm.get("doc_id") or path.stem))
+    doc_id = re.sub(r"[^\w-]", "-", str(fm.get("pack") or fm.get("doc_id") or path.stem))
     assets = path.parent / ".project-docs" / "assets"
     return {"id": doc_id, "path": path, "fm": fm, "title": _clean(fm.get("title")) or path.stem.replace("-", " ").title(),
             "body": preprocess(body, assets, doc_id, warnings, theme)}
@@ -522,31 +577,38 @@ def build(md_paths: list[Path], theme_path: Path | None, out: Path | None, rende
             def link_target(stem, anchor, _pack=is_pack, _ids=pack_ids):
                 if _pack:
                     return (f"#{stem}--{anchor[1:]}" if anchor else f"#doc-{stem}") if stem in _ids else None
-                return f"{stem}.pdf" if (md_dir / f"{stem}.md").is_file() else None
+                return None  # other packs may have no PDF: name them as plain text
 
             bodies, entries, named = [], [], []
             for d in group:
                 html = postprocess(md_to_html(d["body"]), d["id"], md_dir, link_target)
+                chapters = "<h1" in html
                 if is_pack:
-                    html = f'<h1 class="doc-title" id="doc-{d["id"]}-title">{htmllib.escape(d["title"])}</h1>' + html
                     entries.append((1, f'doc-{d["id"]}-title', d["title"]))
-                    entries += toc_entries(html, (2,))
+                    entries += [(2, a, t) for _, a, t in toc_entries(html, (1,) if chapters else (2,))]
+                    html = f'<h1 class="doc-title" id="doc-{d["id"]}-title">{htmllib.escape(d["title"])}</h1>' + html
                 else:
-                    entries += toc_entries(html, (2, 3))
-                bodies.append(f'<main class="doc" id="doc-{d["id"]}">{html}</main>')
+                    entries += toc_entries(html, (1, 2) if chapters else (2, 3))
                 named.append((f"doc-{d['id']}", d["title"]))
+                if chapters and not is_pack:
+                    html, chapter_pages = chapter_sections(html, d["id"])
+                    named += chapter_pages
+                bodies.append(f'<main class="doc{" pack" if chapters and not is_pack else ""}" id="doc-{d["id"]}">{html}</main>')
             fm = group[0]["fm"] if not is_pack else {}
             title = group[0]["title"] if not is_pack else "Documentation Pack"
             confidential = any(bool(d["fm"].get("confidential")) for d in group)
             authors = {_clean(d["fm"].get("author")) for d in group} - {""}
             author = ", ".join(sorted(authors))
-            css = "\n".join([font_faces(), theme_vars(theme, page_size), base_css,
-                             page_css(theme, page_size, project, named, confidential)])
+            pack = None if is_pack else group[0]["fm"].get("pack")
+            css = "\n".join([font_faces(), theme_vars(theme, page_size, pack), base_css,
+                             page_css(theme, page_size, project, named, confidential, pack,
+                                      "" if is_pack else group[0]["title"])])
             cover_part = cover_html(
                 logo=logo, project=project, title=title,
                 subtitle=_clean(fm.get("subtitle")) if not is_pack else f"{len(group)} documents",
                 version=_clean(fm.get("version")), date=_date(fm.get("date")), author=author,
-                org=_clean(fm.get("org")), confidential=confidential) if cover else ""
+                org=_clean(fm.get("org")), confidential=confidential, chapters=len(fm.get("chapters") or []),
+                spectrum=spectrum(theme), current=PACK_ORDER.index(pack) if pack in PACK_ORDER else -1) if cover else ""
             toc_list = entries if toc else []
 
             def make_html(numbers, markers, _cover=cover_part, _toc=toc_list, _bodies=bodies, _css=css,
@@ -560,7 +622,7 @@ def build(md_paths: list[Path], theme_path: Path | None, out: Path | None, rende
             make_html.anchors = [anchor for _, anchor, _ in toc_list]
             pdf_path.parent.mkdir(parents=True, exist_ok=True)
             warnings += r.render(make_html, pdf_path) or []
-            pages[str(pdf_path)] = finalize(pdf_path, f"{title} — {project}", author, f"{title} for {project}",
+            pages[str(pdf_path)] = finalize(pdf_path, f"{title} · {project}", author, f"{title} for {project}",
                                             ", ".join(d["id"] for d in group))
             outputs.append(str(pdf_path))
     finally:
@@ -573,7 +635,7 @@ def main(argv=None) -> int:
                                  formatter_class=argparse.RawDescriptionHelpFormatter,
                                  epilog=__doc__.split("\n\n", 1)[1])
     ap.add_argument("markdown", nargs="+", type=Path)
-    ap.add_argument("--theme", type=Path, help="theme.json (default <docs>/.project-docs/theme.json, else clean-light)")
+    ap.add_argument("--theme", type=Path, help="theme.json (default <docs>/.project-docs/theme.json, else themes/default.json)")
     ap.add_argument("--out", type=Path, help="output dir, or a .pdf path for a single doc / --combine")
     ap.add_argument("--renderer", choices=["weasyprint", "chromium"], default="weasyprint")
     ap.add_argument("--page-size", choices=list(PAGE_SIZES), default="a4")

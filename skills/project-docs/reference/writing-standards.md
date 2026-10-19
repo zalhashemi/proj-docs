@@ -26,16 +26,18 @@ Block form, for a paragraph or table built on an assumption:
 
 Inline form, for a single value: `Peak load is ~200 req/s ⟨assumption⟩.`
 
-Every doc ends with this appendix, which repeats each assumption in one line plus the open
-questions:
+Every pack ends with this chapter. It names the chapters left out, then repeats each assumption
+in one line plus the open questions, for the whole pack:
 
 ```markdown
-## Assumptions and open questions
+# Assumptions and open questions {#ch-assumptions}
 
-| # | Item | Type | Why unverified | Who can confirm |
-|---|------|------|----------------|-----------------|
-| A1 | 10%/month growth | assumption | not in repo or inputs | product owner |
-| Q1 | Who owns on-call? | open question | no CODEOWNERS / inputs | eng manager |
+Not included: Data Model (no database found), Integration Guide (no openapi or routes found).
+
+| # | Chapter | Item | Type | Why unverified | Who can confirm |
+|---|---------|------|------|----------------|-----------------|
+| A1 | 1-Year Forecast | 10%/month growth | assumption | not in repo or inputs | product owner |
+| Q1 | Runbook | Who owns on-call? | open question | no CODEOWNERS / inputs | eng manager |
 ```
 
 If there are none, write "None. Every statement is backed by repo evidence or user input."

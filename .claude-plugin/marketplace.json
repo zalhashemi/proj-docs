@@ -9,7 +9,7 @@
   "plugins": [
     {
       "name": "project-docs",
-      "description": "Generate branded PDF project docs from your codebase: dev guide, architecture, API reference, runbook, user guide, forecast, budget and more.",
+      "description": "Generate project docs from your codebase as one Markdown pack per category, with branded PDFs on request: dev guide, architecture, API reference, runbook, user guide, forecast, budget and more.",
       "source": "./",
       "category": "documentation"
     }

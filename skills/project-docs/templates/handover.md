@@ -9,8 +9,8 @@ doc_id: handover
 confidential: true
 ---
 
-<!-- guide: The single entry point for a new team. Summarise and link to the detailed docs
-rather than repeating them. The repo can't show access, people or tribal knowledge, so those
+<!-- guide: The single entry point for a new team. Summarise and point to the Developer and Ops
+packs by name rather than repeating them. The repo can't show access, people or tribal knowledge, so those
 come from inputs or appear as open questions. -->
 
 ## Handover summary
@@ -25,15 +25,15 @@ come from inputs or appear as open questions. -->
 
 ## System at a glance
 
-{{3–5 sentences: what it does, stack, where it runs. Link the [Architecture](architecture.md) doc.}}
+{{3–5 sentences: what it does, stack, where it runs. Point to the Developer pack, Architecture chapter.}}
 
-| Area | Summary | Detailed doc |
+| Area | Summary | Where to read more |
 |---|---|---|
-| Code and local setup | {{summary}} | [Developer Guide](dev-guide.md) |
-| Architecture | {{summary}} | [Architecture](architecture.md) |
-| Deployment | {{summary}} | [CI/CD](cicd-deployment.md) |
-| Operations | {{summary}} | [Runbook](runbook.md) |
-| External services | {{n}} services | [Third-Party Services](third-party-services.md) |
+| Code and local setup | {{summary}} | Developer pack, Developer Guide |
+| Architecture | {{summary}} | Developer pack, Architecture |
+| Deployment | {{summary}} | Developer pack, CI/CD and Deployment |
+| Operations | {{summary}} | Ops pack, Runbook |
+| External services | {{n}} services | Ops pack, Third-Party Services |
 
 ## Access to transfer
 

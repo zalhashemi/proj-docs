@@ -110,7 +110,7 @@ def rng(lo: float, hi: float, cur: str | None = None) -> str:
 def inputs_table(sources: list, caption: str) -> str:
     rows = ["| Input | Value | Source | Assumption |", "|---|---|---|---|"]
     for key, val, src, assumed in sources:
-        rows.append(f"| `{key}` | {val} | {src} | {'⟨assumption⟩' if assumed else '—'} |")
+        rows.append(f"| `{key}` | {val} | {src} | {'⟨assumption⟩' if assumed else '-'} |")
     return f"{caption}\n\n" + "\n".join(rows)
 
 
@@ -148,7 +148,7 @@ def chart(path: Path, labels: list[str], series: dict[str, list[float]], colors:
 
 
 def theme_colors(theme_path: Path | None) -> dict:
-    path = theme_path if theme_path and theme_path.is_file() else SKILL_DIR / "themes" / "clean-light.json"
+    path = theme_path if theme_path and theme_path.is_file() else SKILL_DIR / "themes" / "default.json"
     return load_json(path)["colors"]
 
 
@@ -196,7 +196,7 @@ def render_forecast(f: dict, charts: dict[str, str]) -> str:
     out += ["```", "", "## Scenarios", "",
             "| Scenario | Growth / month | Conversion |", "|---|---|---|"]
     for n in names:
-        conv = f"{s[n]['conversion_pct']:g}%" if f["has_revenue"] else "—"
+        conv = f"{s[n]['conversion_pct']:g}%" if f["has_revenue"] else "-"
         out.append(f"| {n} | {s[n]['growth_pct']:g}% | {conv} |")
 
     def table(metric: str, fmt) -> list[str]:

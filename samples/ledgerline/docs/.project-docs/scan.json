@@ -4,7 +4,7 @@
     "version": "0.9.2",
     "description": "Ledgerline: order and invoice API for B2B wholesalers.",
     "license": null,
-    "file_count": 22,
+    "file_count": 25,
     "code_files": 12
   },
   "languages": {
@@ -275,13 +275,22 @@
     "contributing": null,
     "security": null,
     "codeowners": null,
-    "docs_dir_files": 0
+    "docs_dir_files": 3
   },
   "git": {
-    "is_repo": false
+    "is_repo": true,
+    "remote_name": "origin",
+    "remote_url": "https://github.com/zalhashemi/proj-docs.git",
+    "branch": "main",
+    "commits": 2,
+    "contributors": 1,
+    "first_commit": "2026-10-18",
+    "last_commit": "2026-10-18",
+    "commits_last_90d": 2,
+    "tags": []
   },
   "has_ui": false,
   "ui_evidence": [],
   "stage_hint": "active",
-  "stage_evidence": "12 code files, 0 commits"
+  "stage_evidence": "12 code files, 2 commits"
 }

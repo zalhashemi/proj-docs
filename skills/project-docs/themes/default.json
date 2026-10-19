@@ -1,0 +1,37 @@
+{
+  "name": "default",
+  "label": "Spectrum",
+  "colors": {
+    "primary": "#0068a8",
+    "secondary": "#1e4f8f",
+    "accent": "#b45200",
+    "bg": "#ffffff",
+    "surface": "#f3f4f5",
+    "text": "#17191c",
+    "muted": "#5f6670",
+    "border": "#dfe2e5",
+    "success": "#00775a",
+    "warning": "#8a5a00",
+    "danger": "#b3261e"
+  },
+  "packs": {
+    "planning": "#4f5d6b",
+    "developer": "#0068a8",
+    "business": "#00775a",
+    "user": "#b45200",
+    "ops": "#1e4f8f",
+    "handover": "#566b1f"
+  },
+  "fonts": {
+    "heading": "Inter",
+    "body": "Source Serif 4",
+    "mono": "JetBrains Mono"
+  },
+  "logo": null,
+  "meta": {
+    "sources": {},
+    "adjustments": [],
+    "dark_mode_mapped": false,
+    "substitutions": []
+  }
+}

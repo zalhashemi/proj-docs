@@ -1,14 +1,16 @@
 #!/usr/bin/env python3
-"""Track generated docs so updates touch only what changed.
+"""Track generated packs so updates touch only what changed.
 
-state.json stores the lifecycle stage, the scan snapshot at generation time, and per doc:
-a hash of the scan keys it depends on (catalog `scan_keys`), a hash of the Markdown as
-generated (to detect hand edits), and its version.
+Each pack is one docs/<pack>.md whose chapters are catalog docs (front matter `chapters:`).
+state.json stores the lifecycle stage, the scan snapshot at generation time, and per pack:
+a hash of the scan keys its chapters depend on (catalog `scan_keys`, plus `needs` of the
+chapters left out), a hash of the Markdown as generated (to detect hand edits), and its version.
 
 Usage (run from the project root, or pass --docs-dir):
   state.py set-stage planning|complete
-  state.py record [--doc ID ...]      after rendering: store hashes for these docs (default: all)
-  state.py diff                       which docs need a patch, what changed, which were hand-edited
+  state.py packs                      per pack: chapters the scan supports, and those skipped (why)
+  state.py record [--pack ID ...]     after drafting: store hashes for these packs (default: all)
+  state.py diff                       which packs/chapters need a patch, what changed, hand edits
   state.py bump ID                    front matter: version x.y.z -> x.y.(z+1), date -> today
   state.py show
 """
@@ -36,12 +38,57 @@ def catalog() -> dict:
     return {d["id"]: d for d in yaml.safe_load((SKILL_DIR / "catalog.yaml").read_text(encoding="utf-8"))["docs"]}
 
 
+def packs(cat: dict) -> dict[str, list[str]]:
+    out: dict[str, list[str]] = {}
+    for doc_id, d in cat.items():
+        out.setdefault(d["pack"], []).append(doc_id)
+    return out
+
+
+def has_evidence(value) -> bool:
+    """True if any leaf is non-empty: {'models': [], 'migrations': []} has none."""
+    if isinstance(value, dict):
+        return any(has_evidence(v) for v in value.values())
+    return bool(value)
+
+
+def missing_evidence(doc: dict, scan: dict) -> str | None:
+    needs = doc.get("needs") or []
+    if needs and not any(has_evidence(scan.get(k)) for k in needs):
+        return "no " + " or ".join(needs) + " found"
+    return None
+
+
+def front_matter(text: str) -> dict:
+    import yaml
+    m = re.match(r"^---\s*\n(.*?)\n---\s*\n", text, re.S)
+    data = yaml.safe_load(m.group(1)) if m else None
+    return data if isinstance(data, dict) else {}
+
+
+def pack_chapters(pack_id: str, text: str, cat: dict) -> list[str]:
+    """Chapters listed in the pack's front matter (default: every chapter of the pack)."""
+    all_ch = packs(cat).get(pack_id, [])
+    chapters = front_matter(text).get("chapters") or all_ch
+    bad = [c for c in chapters if c not in all_ch]
+    if bad:
+        raise SystemExit(json.dumps({"error": f"{pack_id}.md lists chapters not in pack '{pack_id}': {bad}"}))
+    return chapters
+
+
+def watched_keys(pack_id: str, chapters: list[str], cat: dict) -> list[str]:
+    """Included chapters' scan_keys, plus `needs` of skipped ones so new evidence is noticed."""
+    keys = {k for c in chapters for k in cat[c]["scan_keys"]}
+    keys |= {k for c in packs(cat)[pack_id] if c not in chapters for k in cat[c].get("needs", [])}
+    return sorted(keys)
+
+
 class State:
     def __init__(self, docs_dir: Path):
         self.docs_dir = docs_dir
         self.dir = docs_dir / ".project-docs"
         self.path = self.dir / "state.json"
-        self.data = load_json(self.path) if self.path.is_file() else {"version": 1, "stage": None, "docs": {}}
+        self.data = load_json(self.path) if self.path.is_file() else {"version": 2, "stage": None, "packs": {}}
 
     def save(self) -> None:
         write_json(self.path, self.data)
@@ -58,20 +105,32 @@ def front_matter_version(text: str) -> str | None:
     return m.group(1) if m else None
 
 
+def cmd_packs(st: State) -> dict:
+    cat, scan = catalog(), st.scan()
+    out = {}
+    for pack_id, chapters in packs(cat).items():
+        skipped = {c: why for c in chapters if (why := missing_evidence(cat[c], scan))}
+        out[pack_id] = {"chapters": [c for c in chapters if c not in skipped], "skipped": skipped}
+    return out
+
+
 def cmd_record(st: State, ids: list[str]) -> dict:
     cat, scan = catalog(), st.scan()
-    ids = ids or sorted(p.stem for p in st.docs_dir.glob("*.md") if p.stem in cat)
+    all_packs = packs(cat)
+    ids = ids or sorted(p.stem for p in st.docs_dir.glob("*.md") if p.stem in all_packs)
     recorded = []
-    for doc_id in ids:
-        md = st.docs_dir / f"{doc_id}.md"
-        if doc_id not in cat or not md.is_file():
-            raise SystemExit(json.dumps({"error": f"cannot record '{doc_id}': unknown id or missing {md}"}))
-        keys = cat[doc_id]["scan_keys"]
-        st.data["docs"][doc_id] = {"scan_keys": keys, "scan_hash": sha({k: scan.get(k) for k in keys}),
-                                   "md_hash": sha(md.read_bytes()),
-                                   "version": front_matter_version(md.read_text(encoding="utf-8")),
-                                   "recorded": dt.date.today().isoformat()}
-        recorded.append(doc_id)
+    for pack_id in ids:
+        md = st.docs_dir / f"{pack_id}.md"
+        if pack_id not in all_packs or not md.is_file():
+            raise SystemExit(json.dumps({"error": f"cannot record '{pack_id}': unknown pack or missing {md}"}))
+        text = md.read_text(encoding="utf-8")
+        chapters = pack_chapters(pack_id, text, cat)
+        keys = watched_keys(pack_id, chapters, cat)
+        st.data["packs"][pack_id] = {"chapters": chapters, "scan_keys": keys,
+                                    "scan_hash": sha({k: scan.get(k) for k in keys}),
+                                    "md_hash": sha(md.read_bytes()), "version": front_matter_version(text),
+                                    "recorded": dt.date.today().isoformat()}
+        recorded.append(pack_id)
     st.data["scan_snapshot"] = scan
     st.data["scan_hash"] = sha(scan)
     st.save()
@@ -133,32 +192,43 @@ def summarize(key: str, old, new) -> list[str]:
 def cmd_diff(st: State) -> dict:
     scan, old_scan = st.scan(), st.data.get("scan_snapshot", {})
     cat = catalog()
+    all_packs = packs(cat)
     changed, unchanged, missing = [], 0, []
-    for doc_id, rec in sorted(st.data["docs"].items()):
-        md = st.docs_dir / f"{doc_id}.md"
+    for pack_id, rec in sorted(st.data["packs"].items()):
+        md = st.docs_dir / f"{pack_id}.md"
         if not md.is_file():
-            missing.append(doc_id)
+            missing.append(pack_id)
             continue
-        keys = cat.get(doc_id, {}).get("scan_keys", rec["scan_keys"])
+        included = rec["chapters"]
         hand_edited = sha(md.read_bytes()) != rec["md_hash"]
-        stale = [k for k in keys if sha(scan.get(k)) != sha(old_scan.get(k))]
+        stale = [k for k in watched_keys(pack_id, included, cat) if sha(scan.get(k)) != sha(old_scan.get(k))]
         if not stale and not hand_edited:
             unchanged += 1
             continue
-        summary = [s for k in stale for s in summarize(k, old_scan.get(k), scan.get(k))]
-        if stale or hand_edited:
-            changed.append({"doc": doc_id, "keys": stale, "summary": summary, "hand_edited": hand_edited,
-                            "needs_patch": bool(stale)})
-    untracked = sorted(p.stem for p in st.docs_dir.glob("*.md") if p.stem in cat and p.stem not in st.data["docs"])
+        chapters = []
+        for c in all_packs[pack_id]:
+            if c in included:
+                keys = [k for k in stale if k in cat[c]["scan_keys"]]
+            elif not missing_evidence(cat[c], scan):   # a skipped chapter now has evidence: offer to add it
+                keys = [k for k in stale if k in cat[c].get("needs", [])]
+            else:
+                keys = []
+            if keys:
+                chapters.append({"chapter": c, "included": c in included, "keys": keys,
+                                 "summary": [s for k in keys for s in summarize(k, old_scan.get(k), scan.get(k))]})
+        changed.append({"pack": pack_id, "chapters": chapters, "hand_edited": hand_edited,
+                        "needs_patch": bool(chapters)})
+    untracked = sorted(p.stem for p in st.docs_dir.glob("*.md")
+                       if p.stem in all_packs and p.stem not in st.data["packs"])
     out = {"stage": st.data.get("stage"), "changed": changed, "unchanged": unchanged,
            "missing_markdown": missing, "untracked": untracked}
     if st.data.get("stage") == "planning" and scan.get("stage_hint") == "active":
-        out["stage_suggestion"] = "The project now has code; ask whether it is complete and the full catalog should be offered."
+        out["stage_suggestion"] = "The project now has code; ask whether it is complete and the other packs should be offered."
     return out
 
 
-def cmd_bump(st: State, doc_id: str) -> dict:
-    md = st.docs_dir / f"{doc_id}.md"
+def cmd_bump(st: State, pack_id: str) -> dict:
+    md = st.docs_dir / f"{pack_id}.md"
     if not md.is_file():
         raise SystemExit(json.dumps({"error": f"{md} not found"}))
     text = md.read_text(encoding="utf-8")
@@ -170,7 +240,7 @@ def cmd_bump(st: State, doc_id: str) -> dict:
     head = re.sub(r"^version:.*$", f"version: {new}", head, count=1, flags=re.M)
     head = re.sub(r"^date:.*$", f'date: "{today}"', head, count=1, flags=re.M)
     md.write_text(head + sep + body, encoding="utf-8")
-    return {"doc": doc_id, "version": [old, new], "date": today}
+    return {"pack": pack_id, "version": [old, new], "date": today}
 
 
 def main(argv=None) -> int:
@@ -181,11 +251,12 @@ def main(argv=None) -> int:
     sub = ap.add_subparsers(dest="cmd", required=True)
     s = sub.add_parser("set-stage")
     s.add_argument("stage", choices=["planning", "complete"])
+    sub.add_parser("packs")
     r = sub.add_parser("record")
-    r.add_argument("--doc", action="append", default=[])
+    r.add_argument("--pack", action="append", default=[])
     sub.add_parser("diff")
     b = sub.add_parser("bump")
-    b.add_argument("doc")
+    b.add_argument("pack")
     sub.add_parser("show")
     args = ap.parse_args(argv)
     st = State(args.docs_dir)
@@ -194,7 +265,9 @@ def main(argv=None) -> int:
         st.save()
         result = {"stage": args.stage}
     elif args.cmd == "record":
-        result = cmd_record(st, args.doc)
+        result = cmd_record(st, args.pack)
+    elif args.cmd == "packs":
+        result = cmd_packs(st)
     elif args.cmd == "diff":
         if not st.path.is_file():
             result = {"error": "no state.json yet: this is a first run"}
@@ -202,7 +275,7 @@ def main(argv=None) -> int:
             return 1
         result = cmd_diff(st)
     elif args.cmd == "bump":
-        result = cmd_bump(st, args.doc)
+        result = cmd_bump(st, args.pack)
     else:
         result = {k: v for k, v in st.data.items() if k != "scan_snapshot"}
     print(json.dumps(result, indent=2))

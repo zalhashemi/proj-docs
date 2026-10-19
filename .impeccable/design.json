@@ -1,0 +1,291 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-10-19T18:33:27",
+  "title": "Design System: project-docs",
+  "extensions": {
+    "colorMeta": {
+      "pack-planning": {
+        "role": "primary",
+        "displayName": "Planning Slate",
+        "tonalRamp": [
+          "#20252b",
+          "#2f3840",
+          "#3f4a56",
+          "#4f5d6b",
+          "#848e97",
+          "#b0b6bc",
+          "#d3d6da",
+          "#edeff0"
+        ]
+      },
+      "pack-developer": {
+        "role": "primary",
+        "displayName": "Developer Blue",
+        "tonalRamp": [
+          "#002a43",
+          "#003e65",
+          "#005386",
+          "#0068a8",
+          "#4c95c2",
+          "#8cbbd8",
+          "#bfd9e9",
+          "#e6f0f6"
+        ]
+      },
+      "pack-business": {
+        "role": "primary",
+        "displayName": "Business Green",
+        "tonalRamp": [
+          "#003024",
+          "#004736",
+          "#005f48",
+          "#00775a",
+          "#4ca08c",
+          "#8cc2b5",
+          "#bfddd6",
+          "#e6f1ee"
+        ]
+      },
+      "pack-user": {
+        "role": "primary",
+        "displayName": "User Orange",
+        "tonalRamp": [
+          "#482100",
+          "#6c3100",
+          "#904200",
+          "#b45200",
+          "#ca864c",
+          "#ddb18c",
+          "#ecd4bf",
+          "#f8eee6"
+        ]
+      },
+      "pack-ops": {
+        "role": "primary",
+        "displayName": "Ops Navy",
+        "tonalRamp": [
+          "#0c2039",
+          "#122f56",
+          "#183f72",
+          "#1e4f8f",
+          "#6284b1",
+          "#9ab0cd",
+          "#c7d3e3",
+          "#e8edf4"
+        ]
+      },
+      "pack-handover": {
+        "role": "primary",
+        "displayName": "Handover Olive",
+        "tonalRamp": [
+          "#222b0c",
+          "#344013",
+          "#455619",
+          "#566b1f",
+          "#899762",
+          "#b3bc9a",
+          "#d5dac7",
+          "#eef0e9"
+        ]
+      },
+      "ink": {
+        "role": "neutral",
+        "displayName": "Ink",
+        "tonalRamp": [
+          "#090a0b",
+          "#0e0f11",
+          "#121416",
+          "#17191c",
+          "#5d5e60",
+          "#979899",
+          "#c5c6c6",
+          "#e8e8e8"
+        ]
+      },
+      "muted": {
+        "role": "neutral",
+        "displayName": "Muted",
+        "tonalRamp": [
+          "#26292d",
+          "#393d43",
+          "#4c525a",
+          "#5f6670",
+          "#8f949b",
+          "#b7babf",
+          "#d7d9db",
+          "#eff0f1"
+        ]
+      },
+      "paper": {
+        "role": "neutral",
+        "displayName": "Paper",
+        "tonalRamp": [
+          "#666666",
+          "#999999",
+          "#cccccc",
+          "#ffffff",
+          "#ffffff",
+          "#ffffff",
+          "#ffffff",
+          "#ffffff"
+        ]
+      },
+      "surface": {
+        "role": "neutral",
+        "displayName": "Surface",
+        "tonalRamp": [
+          "#616262",
+          "#929293",
+          "#c2c3c4",
+          "#f3f4f5",
+          "#f7f7f8",
+          "#fafafa",
+          "#fcfcfc",
+          "#fefefe"
+        ]
+      },
+      "hairline": {
+        "role": "neutral",
+        "displayName": "Hairline",
+        "tonalRamp": [
+          "#595a5c",
+          "#868889",
+          "#b2b5b7",
+          "#dfe2e5",
+          "#e9ebed",
+          "#f1f2f3",
+          "#f7f8f8",
+          "#fcfcfc"
+        ]
+      },
+      "assumption-amber": {
+        "role": "tertiary",
+        "displayName": "Assumption Amber",
+        "tonalRamp": [
+          "#372400",
+          "#533600",
+          "#6e4800",
+          "#8a5a00",
+          "#ad8c4c",
+          "#cab58c",
+          "#e2d6bf",
+          "#f3eee6"
+        ]
+      },
+      "danger": {
+        "role": "tertiary",
+        "displayName": "Danger",
+        "tonalRamp": [
+          "#480f0c",
+          "#6b1712",
+          "#8f1e18",
+          "#b3261e",
+          "#ca6762",
+          "#dd9d9a",
+          "#ecc9c7",
+          "#f7e9e8"
+        ]
+      },
+      "success": {
+        "role": "tertiary",
+        "displayName": "Success",
+        "tonalRamp": [
+          "#003024",
+          "#004736",
+          "#005f48",
+          "#00775a",
+          "#4ca08c",
+          "#8cc2b5",
+          "#bfddd6",
+          "#e6f1ee"
+        ]
+      }
+    },
+    "typographyMeta": {
+      "body": {
+        "displayName": "Body",
+        "purpose": "Running text in the reading column."
+      },
+      "chapter-title": {
+        "displayName": "Chapter title",
+        "purpose": "The # heading at the top of each chapter."
+      }
+    },
+    "shadows": [],
+    "motion": [],
+    "breakpoints": []
+  },
+  "components": [
+    {
+      "name": "Chapter band",
+      "kind": "custom",
+      "refersTo": "chapter-band",
+      "description": "Full-height pack colour band on every chapter page.",
+      "html": "<div class=\"ds-band\"><b>01</b><span>API Reference</span><small>Developer Pack<br>Ledgerline</small></div>",
+      "css": ".ds-band{display:flex;flex-direction:column;justify-content:space-between;width:150px;height:300px;padding:12px 16px 16px 24px;background:#0068a8;color:#fff;font-family:Inter,sans-serif}.ds-band b{font-size:44px;letter-spacing:-.04em}.ds-band span{font-size:16px;font-weight:700}.ds-band small{font-size:10px;line-height:1.45}"
+    },
+    {
+      "name": "Section heading",
+      "kind": "custom",
+      "refersTo": "section",
+      "description": "## heading led by a pack-colour square.",
+      "html": "<h2 class=\"ds-h2\">Endpoints</h2>",
+      "css": ".ds-h2{font:700 20px Inter,sans-serif;letter-spacing:-.015em;color:#17191c}.ds-h2::before{content:'';display:inline-block;width:9px;height:9px;margin-right:9px;background:#0068a8}"
+    },
+    {
+      "name": "Callout",
+      "kind": "card",
+      "refersTo": "callout-label",
+      "description": "Tint field with a square label plate.",
+      "html": "<div class=\"ds-callout\"><span>Warning</span><p>Not implemented yet: the handler raises 501.</p></div>",
+      "css": ".ds-callout{background:#f7e9e8;padding:10px 14px;font-family:'Source Serif 4',serif}.ds-callout span{display:inline-block;background:#b3261e;color:#fff;font:700 10px Inter,sans-serif;padding:2px 7px}.ds-callout p{margin:6px 0 0}"
+    },
+    {
+      "name": "Assumption callout",
+      "kind": "card",
+      "refersTo": "callout-label",
+      "description": "Dashed amber frame over a hatch: unverified content.",
+      "html": "<div class=\"ds-assume\"><span>Assumption · unverified</span><p>/docs and /openapi.json are reachable.</p></div>",
+      "css": ".ds-assume{border:1.5px dashed #8a5a00;background:repeating-linear-gradient(135deg,#f3eee6 0 9px,#fff 9px 18px);padding:10px 14px;font-family:'Source Serif 4',serif}.ds-assume span{display:inline-block;background:#8a5a00;color:#fff;font:700 10px Inter,sans-serif;padding:2px 7px}.ds-assume p{margin:6px 0 0}"
+    },
+    {
+      "name": "Reference table",
+      "kind": "custom",
+      "refersTo": "table",
+      "description": "Open table: pack-colour head over a heavy rule, hairline rows.",
+      "html": "<table class=\"ds-table\"><tr><th>Method</th><th>Path</th></tr><tr><td>GET</td><td>/orders</td></tr><tr><td>POST</td><td>/orders</td></tr></table>",
+      "css": ".ds-table{border-collapse:collapse;font:11px Inter,sans-serif;width:320px}.ds-table th{color:#0068a8;text-align:left;border-bottom:2px solid #0068a8;padding:5px 10px 5px 0}.ds-table td{border-bottom:1px solid #dfe2e5;padding:5px 10px 5px 0}"
+    }
+  ],
+  "narrative": {
+    "northStar": "The Spectrum Index",
+    "overview": "After Otl Aicher's Munich '72 identity: one flat colour per pack, a full-bleed chapter band and a fixed grid do the wayfinding, around a calm serif reading column.",
+    "keyCharacteristics": [
+      "One colour per pack",
+      "Full-bleed chapter band on every chapter page",
+      "Inter frame, Source Serif 4 column",
+      "Square corners, no shadows"
+    ],
+    "rules": [
+      {
+        "name": "The One Pack Colour Rule",
+        "body": "A pack PDF uses only its own pack colour plus status colours; other pack colours appear only in the cover strip.",
+        "section": "colors"
+      },
+      {
+        "name": "The Amber Means Unverified Rule",
+        "body": "Assumption amber marks assumptions only, always with a dashed frame.",
+        "section": "colors"
+      }
+    ],
+    "dos": [
+      "Do keep text 10mm or more from the page edge.",
+      "Do keep white-on-pack contrast at 4.5:1 or above."
+    ],
+    "donts": [
+      "Don't add coloured border-left accents.",
+      "Don't put kickers above headings.",
+      "Don't use em-dashes."
+    ]
+  }
+}

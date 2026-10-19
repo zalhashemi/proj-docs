@@ -1,22 +1,30 @@
 {
-  "name": "corporate-blue",
-  "label": "Corporate Blue",
+  "name": "default",
+  "label": "Spectrum",
   "colors": {
-    "primary": "#1e3a8a",
-    "secondary": "#1d4ed8",
-    "accent": "#0e7490",
+    "primary": "#0068a8",
+    "secondary": "#1e4f8f",
+    "accent": "#b45200",
     "bg": "#ffffff",
-    "surface": "#f1f5f9",
-    "text": "#1f2937",
-    "muted": "#4b5563",
-    "border": "#cbd5e1",
-    "success": "#166534",
-    "warning": "#a16207",
-    "danger": "#991b1b"
+    "surface": "#f3f4f5",
+    "text": "#17191c",
+    "muted": "#5f6670",
+    "border": "#dfe2e5",
+    "success": "#00775a",
+    "warning": "#8a5a00",
+    "danger": "#b3261e"
+  },
+  "packs": {
+    "planning": "#4f5d6b",
+    "developer": "#0068a8",
+    "business": "#00775a",
+    "user": "#b45200",
+    "ops": "#1e4f8f",
+    "handover": "#566b1f"
   },
   "fonts": {
     "heading": "Inter",
-    "body": "Inter",
+    "body": "Source Serif 4",
     "mono": "JetBrains Mono"
   },
   "logo": null,
@@ -27,7 +35,7 @@
     "substitutions": [],
     "detected": false,
     "notes": [
-      "Using default theme 'corporate-blue' (requested)."
+      "Using default theme 'default': no brand colours detected."
     ],
     "ui_detected": false,
     "ui_evidence": []

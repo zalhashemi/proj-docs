@@ -1,10 +1,11 @@
 # project-docs
 
-A Claude Code skill that turns a repository into branded PDF documentation. It writes a build
-plan before the project exists, then any of 37 document types (developer, business, user, ops
-and governance) once it's complete. The PDFs use the project's own colours, fonts and logo, or
-a default theme. When the code changes, it patches only the affected sections and re-renders
-only those PDFs.
+A Claude Code skill that turns a repository into project documentation: one Markdown pack per
+category you pick (Planning, Developer, Business, User, Ops, Handover and Governance), made of
+37 chapter types, and a branded PDF of a pack when you ask for one. It writes the Planning pack
+before the project exists and the others once it's complete. PDFs use the project's own colours,
+fonts and logo, or the default Spectrum theme. When the code changes, it patches only the
+affected chapter sections and re-renders only packs that already have a PDF.
 
 Ask Claude things like *"generate a docs pack for this project"*, *"write a runbook"*,
 *"make a 1-year forecast and budget"*, or *"update the docs"*.
@@ -53,25 +54,25 @@ Nothing needs network access at runtime. Override the environment with `PROJECT_
 
 ```text
 scan_project.py ─► scan.json ─┐
-detect_theme.py ─► theme.json ├─► Claude drafts docs/<id>.md from templates/ ─► build_pdf.py ─► docs/pdf/*.pdf
-inputs.yaml (your answers) ───┘        (finance.py does all the maths)            verify_pdf.py ─► previews
-                                                                                   state.py record ─► state.json
+detect_theme.py ─► theme.json ├─► Claude drafts docs/<pack>.md from templates/ ─► state.py record ─► state.json
+inputs.yaml (your answers) ───┘        (finance.py does all the maths)
+                                    on request: build_pdf.py ─► docs/pdf/<pack>.pdf ─► verify_pdf.py ─► previews
 ```
 
 | File | Role |
 |---|---|
 | `SKILL.md` | Trigger description and the workflow Claude follows (kept under 150 lines) |
-| `catalog.yaml` | All document types: audience, sources, questions, template, `scan_keys`, presets |
-| `templates/*.md` | One outline per document, with `<!-- guide: -->` notes for the drafter |
+| `catalog.yaml` | Packs, and every chapter type: its pack, sources, questions, template, `needs`, `scan_keys` |
+| `templates/*.md` | One outline per chapter type, with `<!-- guide: -->` notes for the drafter |
 | `reference/` | Writing standards (no fabrication, assumption rules), theme detection, workflow details |
-| `themes/*.json` | Default themes: clean-light, midnight, corporate-blue, warm-editorial, mono-minimal |
-| `assets/` | `base.css` (print styles driven by CSS variables), `cover.html.j2`, bundled OFL fonts |
+| `themes/*.json` | `default` (Spectrum: one colour per pack), plus clean-light, midnight, corporate-blue, warm-editorial, mono-minimal |
+| `assets/` | `base.css` (print styles driven by CSS variables), `cover.html.j2`, bundled OFL fonts. The design rules are in the repo's `DESIGN.md` |
 | `scripts/` | The tools below; each has `--help` and prints JSON |
 
 Output stays inside the target project:
 
-- `docs/<id>.md`: the source of truth, which you can edit
-- `docs/pdf/`: the rendered PDFs
+- `docs/<pack>.md`: one per selected pack, the source of truth, which you can edit
+- `docs/pdf/<pack>.pdf`: only for packs you asked to render
 - `docs/.project-docs/`: scan, theme, inputs, state, charts and previews
 
 ## Script usage
@@ -82,30 +83,32 @@ PY=$(python3 $S/bootstrap.py | python3 -c "import json,sys; print(json.load(sys.
 
 $PY $S/scan_project.py .                               # -> docs/.project-docs/scan.json
 $PY $S/detect_theme.py .                               # -> docs/.project-docs/theme.json
-$PY $S/detect_theme.py . --use midnight                # pick a default theme instead
+$PY $S/detect_theme.py . --use midnight                # pick a bundled theme instead
+$PY $S/state.py packs                                  # chapters per pack the scan supports, and those skipped
 $PY $S/preview_themes.py                               # one swatch page per theme
 $PY $S/finance.py forecast --inputs docs/.project-docs/inputs.yaml --theme docs/.project-docs/theme.json
-$PY $S/build_pdf.py docs/dev-guide.md                  # -> docs/pdf/dev-guide.pdf
-$PY $S/build_pdf.py docs/*.md --combine                # -> docs/pdf/docs-pack.pdf
+$PY $S/build_pdf.py docs/developer.md                  # -> docs/pdf/developer.pdf
+$PY $S/build_pdf.py docs/*.md --combine                # -> docs/pdf/docs-pack.pdf (all packs, on request)
 $PY $S/build_pdf.py docs/*.md --renderer chromium --page-size letter
 $PY $S/verify_pdf.py docs/pdf/*.pdf --theme docs/.project-docs/theme.json
 $PY $S/state.py set-stage complete                     # lifecycle: planning -> complete
-$PY $S/state.py record                                 # remember what each doc was built from
-$PY $S/state.py diff                                   # what changed since, per doc
-$PY $S/state.py bump api-reference                     # version 1.0.0 -> 1.0.1, date -> today
+$PY $S/state.py record                                 # remember what each pack was built from
+$PY $S/state.py diff                                   # what changed since, per pack and chapter
+$PY $S/state.py bump developer                         # version 1.0.0 -> 1.0.1, date -> today
 ```
 
 Use `--exclude 'path/*'` on `scan_project.py` and `detect_theme.py` to skip sample or fixture
 folders.
 
-## Add a document type
+## Add a chapter type
 
-1. Add an entry to `catalog.yaml`. Every field is required except `stage`:
+1. Add an entry to `catalog.yaml`. Every field is required except `stage` and `needs`:
 
    ```yaml
    - id: accessibility-report
      title: Accessibility Report
      audience: governance            # planning|business|developer|ops|user|governance
+     pack: user                      # the one pack it's a chapter of (see `packs`)
      description: "WCAG 2.2 AA checklist with findings from the repo."
      sources_to_scan: ["src/**/*.tsx", ".eslintrc*"]
      required_inputs:
@@ -114,27 +117,27 @@ folders.
      est_pages: "2-4"
      requires_ui: true               # then the template needs a <!-- variant: cli-api --> section
      depends_on: [user-guide]
-     scan_keys: [has_ui, frameworks] # changes here flag the doc in update mode
+     scan_keys: [has_ui, frameworks] # changes here flag the chapter in update mode
+     needs: [has_ui]                 # optional: skip the chapter unless one of these has evidence
    ```
 
 2. Create `templates/accessibility-report.md`:
    - front matter whose `doc_id` and `title` match the catalog entry
    - `<!-- guide: -->` comments for each section
    - `{{placeholders}}`
-   - an `## Assumptions and open questions` appendix
+   - an `## Assumptions and open questions` section (merged into the pack's last chapter)
 
-3. Optionally add the id to a preset in `catalog.yaml`.
-
-4. Run `pytest tests/test_catalog.py` (from the repository root). It checks the schema, the template, the
+3. Run `pytest tests/test_catalog.py` (from the repository root). It checks the schema, the template, the
    cross-links and that each shared input key has a consistent type.
 
 ## Add a theme
 
-Copy `themes/clean-light.json` to `themes/<name>.json` and change `name`, `label`, `colors`
-(all 11 roles) and `fonts`. Add `cover: {bg, text}` for a cover that isn't the primary colour.
+Copy `themes/default.json` to `themes/<name>.json` and change `name`, `label`, `colors`
+(all 11 roles) and `fonts`. Keep `packs` (one colour per pack id) or delete it, and every pack
+uses the primary colour. Add `cover: {bg, text}` for a cover that isn't the pack colour.
 Use bundled font names (Inter, Source Serif 4, Fraunces, JetBrains Mono) or fonts installed on
 the machine. The catalog tests enforce WCAG contrast: text on bg/surface and primary on white
-must be at least 4.5:1, and muted on bg at least 3:1. Check the result with `preview_themes.py`.
+must be at least 4.5:1, white on each pack colour at least 4.5:1, and muted on bg at least 3:1. Check the result with `preview_themes.py`.
 
 ## Tests
 
@@ -146,7 +149,7 @@ From the repository root:
 
 The suite covers the catalog and templates, the scanner and theme detection on three fixtures
 (React + Tailwind, FastAPI, Flutter) plus edge cases, rendering, verification, finance maths,
-update tracking, and a full end-to-end build of 5 documents per fixture.
+pack update tracking, and a full end-to-end build of 3 packs per fixture.
 Rendering tests skip themselves when no renderer is installed.
 
 ## Troubleshooting

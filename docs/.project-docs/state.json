@@ -1,22 +1,30 @@
 {
-  "version": 1,
+  "version": 2,
   "stage": "complete",
-  "docs": {
-    "dev-guide": {
-      "scan_keys": [
-        "languages",
-        "frameworks",
-        "scripts",
-        "entry_points",
-        "packages",
-        "env_vars",
-        "tests",
-        "infra"
+  "packs": {
+    "developer": {
+      "chapters": [
+        "dev-guide"
       ],
-      "scan_hash": "ca60bf0b620d61fc",
-      "md_hash": "b4674ed880e24321",
-      "version": "1.0.1",
-      "recorded": "2026-10-18"
+      "scan_keys": [
+        "ci",
+        "database",
+        "dependencies",
+        "entry_points",
+        "env_vars",
+        "frameworks",
+        "infra",
+        "languages",
+        "openapi",
+        "packages",
+        "routes",
+        "scripts",
+        "tests"
+      ],
+      "scan_hash": "55040fe47d57508d",
+      "md_hash": "bacc97a87bea668a",
+      "version": "1.0.0",
+      "recorded": "2026-10-19"
     }
   },
   "scan_snapshot": {
@@ -25,11 +33,12 @@
       "version": null,
       "description": null,
       "license": null,
-      "file_count": 94,
+      "file_count": 121,
       "code_files": 17
     },
     "languages": {
       "Python": 17,
+      "HTML": 8,
       "CSS": 1
     },
     "frameworks": [],
@@ -83,13 +92,20 @@
         "pytest"
       ],
       "files": 8,
-      "cases_approx": 71,
+      "cases_approx": 77,
       "locations": {
         "tests": 8
       },
       "coverage_config": []
     },
     "env_vars": [
+      {
+        "name": "API_KEY",
+        "sources": [
+          ".impeccable/mocks/decision/challenger-monochrome-proof.html"
+        ],
+        "in_example": false
+      },
       {
         "name": "PROJECT_DOCS_PYTHON",
         "sources": [
@@ -135,24 +151,31 @@
     ],
     "third_party": [],
     "docs": {
-      "readme": null,
+      "readme": "README.md",
       "changelog": "CHANGELOG.md",
       "license": "LICENSE",
       "license_type": "MIT",
       "contributing": "CONTRIBUTING.md",
       "security": null,
       "codeowners": null,
-      "docs_dir_files": 1
+      "docs_dir_files": 2
     },
     "git": {
       "is_repo": true,
-      "branch": null,
-      "commits": 0
+      "remote_name": "origin",
+      "remote_url": "https://github.com/zalhashemi/proj-docs.git",
+      "branch": "main",
+      "commits": 2,
+      "contributors": 1,
+      "first_commit": "2026-10-18",
+      "last_commit": "2026-10-18",
+      "commits_last_90d": 2,
+      "tags": []
     },
     "has_ui": false,
     "ui_evidence": [],
     "stage_hint": "active",
-    "stage_evidence": "17 code files, 0 commits"
+    "stage_evidence": "17 code files, 2 commits"
   },
-  "scan_hash": "0cc2266cc849fe52"
+  "scan_hash": "011516d41acadfb7"
 }

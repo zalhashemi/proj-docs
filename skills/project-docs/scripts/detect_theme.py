@@ -6,7 +6,7 @@ from the primary colour, WCAG contrast is enforced, and dark-only palettes are m
 light print variant. With no usable UI signals, the --default theme is written instead.
 
 Usage:
-  detect_theme.py <project> [--out PATH] [--default clean-light]
+  detect_theme.py <project> [--out PATH] [--default default]
   detect_theme.py <project> --use midnight      # just write a bundled default theme
 See reference/theme-detection.md for the rules.
 """
@@ -513,7 +513,7 @@ def main(argv=None) -> int:
                                  formatter_class=argparse.RawDescriptionHelpFormatter, epilog=__doc__.split("\n\n", 2)[2])
     ap.add_argument("project", type=Path)
     ap.add_argument("--out", type=Path, help="default <project>/docs/.project-docs/theme.json")
-    ap.add_argument("--default", default="clean-light", help="theme used when nothing is detected")
+    ap.add_argument("--default", default="default", help="theme used when nothing is detected")
     ap.add_argument("--use", metavar="THEME", help="skip detection and write this bundled theme")
     ap.add_argument("--exclude", action="append", default=[], metavar="GLOB")
     args = ap.parse_args(argv)

@@ -88,6 +88,9 @@ def check_theme(theme_path: Path) -> list[str]:
         ratio = contrast(c[fg], c.get(bg, bg))
         if ratio < need:
             errs.append(f"theme contrast {fg} on {bg} is {ratio:.2f}:1 (needs {need}:1)")
+    for pack, col in (t.get("packs") or {}).items():   # white band and cover text sit on each pack colour
+        if contrast("#ffffff", col) < 4.5:
+            errs.append(f"theme contrast white on pack '{pack}' is {contrast('#ffffff', col):.2f}:1 (needs 4.5:1)")
     cover = t.get("cover") or {"bg": c["primary"], "text": "#ffffff"}
     if contrast(cover["text"], cover["bg"]) < 4.5:
         errs.append(f"cover text contrast {contrast(cover['text'], cover['bg']):.2f}:1 (needs 4.5:1)")

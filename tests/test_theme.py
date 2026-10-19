@@ -49,7 +49,7 @@ def test_react_fixture(tmp_path):
 
 def test_fastapi_falls_back_to_default(tmp_path):
     t = run(FIXTURES / "fastapi-service", tmp_path)
-    assert t["name"] == "clean-light" and t["meta"]["detected"] is False
+    assert t["name"] == "default" and t["meta"]["detected"] is False
     assert t["meta"]["ui_detected"] is False
     t = run(FIXTURES / "fastapi-service", tmp_path, "--default", "corporate-blue")
     assert t["name"] == "corporate-blue"

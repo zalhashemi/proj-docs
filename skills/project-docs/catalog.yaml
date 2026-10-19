@@ -1,8 +1,9 @@
 # project-docs catalog: one entry per document type.
 #
 # Fields
-#   id               unique slug; output is docs/<id>.md and docs/pdf/<id>.pdf
-#   title            display title
+#   id               unique slug; the chapter anchor is #ch-<id>
+#   title            chapter title
+#   pack             the one pack (docs/<pack>.md) this doc is a chapter of
 #   audience         planning | business | developer | ops | user | governance
 #   description      one line shown in the selection menu
 #   sources_to_scan  globs / files / commands the drafter reads (plus scan.json)
@@ -11,7 +12,8 @@
 #   template         file in templates/
 #   est_pages        rough page range, shown to the user
 #   requires_ui      true -> needs a UI; template has a cli-api variant for no-UI projects
-#   depends_on       doc ids to cross-link
+#   needs            optional scan keys; skip the chapter unless at least one is non-empty
+#   depends_on       doc ids to cross-link (as #ch-<id> inside a pack)
 #   scan_keys        scan.json top-level keys; a change in any of them flags this doc for update
 #   stage            planning | complete | any   (default: complete)
 #
@@ -21,15 +23,13 @@
 
 version: 1
 
-presets:
-  developer: [dev-guide, architecture, api-reference, data-model, testing-strategy, cicd-deployment,
-              env-config-reference, contributing, integration-guide, upgrade-migration-guide]
-  business: [project-brief, prd, roadmap, forecast-1yr, budget-resources, risk-register]
-  user: [user-guide, quick-start, admin-guide, release-notes, troubleshooting-faq, upgrade-migration-guide]
-  ops: [runbook, incident-response, monitoring-slos, backup-dr, third-party-services]
-  handover: [handover, dev-guide, architecture, env-config-reference, cicd-deployment, runbook, backup-dr,
-             third-party-services, dependency-inventory, tech-debt-register, stakeholders-raci]
-  everything: ["*"]   # every complete-stage doc (excludes build-plan)
+packs:     # one docs/<id>.md per pack; chapters are the docs whose `pack` is this id, in catalog order
+  - {id: planning, title: Planning Pack, description: "The build plan, before the project exists."}
+  - {id: developer, title: Developer Pack, description: "Set up, architecture, API, data, testing, CI/CD, config, security, dependencies, debt."}
+  - {id: business, title: Business Pack, description: "Brief, PRD, roadmap, forecast, budget, risks, competition."}
+  - {id: user, title: User Pack, description: "Quick start, user and admin guides, release notes, upgrades, onboarding."}
+  - {id: ops, title: Ops Pack, description: "Runbook, incidents, monitoring, backup/DR, troubleshooting, third-party services."}
+  - {id: handover, title: Handover and Governance Pack, description: "Handover, RACI, privacy, compliance, support/SLA."}
 
 docs:
 
@@ -37,6 +37,7 @@ docs:
   - id: build-plan
     title: Build Plan
     audience: planning
+    pack: planning
     stage: planning
     description: "What will be built, how, in which phases, and what could go wrong. The first doc of any project."
     sources_to_scan: [README*, "docs/**/*.md", package.json, pyproject.toml, "*.md"]
@@ -56,6 +57,7 @@ docs:
   - id: project-brief
     title: Project Brief
     audience: business
+    pack: business
     description: "One-page summary of problem, solution, users, status and next steps."
     sources_to_scan: [README*, package.json, pyproject.toml, CHANGELOG*]
     required_inputs:
@@ -71,6 +73,7 @@ docs:
   - id: prd
     title: Product Requirements Document
     audience: business
+    pack: business
     description: "Goals, non-goals, personas, user stories, prioritised requirements, acceptance criteria."
     sources_to_scan: [README*, "docs/**/*.md", routes, "src/**/pages/**", "app/**/page.*"]
     required_inputs:
@@ -87,6 +90,7 @@ docs:
   - id: roadmap
     title: Roadmap
     audience: business
+    pack: business
     description: "Milestones, phases, dependencies and a Gantt-style timeline table."
     sources_to_scan: [CHANGELOG*, "git tags", "git log --since=6.months", "docs/**/roadmap*", TODO*]
     required_inputs:
@@ -102,6 +106,7 @@ docs:
   - id: forecast-1yr
     title: 1-Year Forecast
     audience: business
+    pack: business
     description: "Monthly users/usage, infra cost and revenue across conservative/base/optimistic scenarios, with charts."
     sources_to_scan: [infra, "docker-compose*", "*.tf", "k8s/**"]
     required_inputs:
@@ -123,6 +128,7 @@ docs:
   - id: budget-resources
     title: Budget and Resource Plan
     audience: business
+    pack: business
     description: "Team roles x allocation x rate, infra/tooling/licences, contingency, one-time vs recurring, totals by quarter."
     sources_to_scan: [infra, third_party, dependencies, CODEOWNERS, "git shortlog -sn"]
     required_inputs:
@@ -141,6 +147,7 @@ docs:
   - id: risk-register
     title: Risk Register
     audience: business
+    pack: business
     description: "Risks with likelihood, impact, score, owner, mitigation and trigger."
     sources_to_scan: [dependencies, tests, ci, "SECURITY*", TODO*, "grep: TODO|FIXME|HACK"]
     required_inputs:
@@ -155,6 +162,7 @@ docs:
   - id: stakeholders-raci
     title: Stakeholders and RACI
     audience: business
+    pack: handover
     description: "Who is involved, their interests, and a RACI matrix for key activities."
     sources_to_scan: [CODEOWNERS, "git shortlog -sn", "MAINTAINERS*", "package.json (author, contributors)"]
     required_inputs:
@@ -169,6 +177,7 @@ docs:
   - id: competitive-analysis
     title: Competitive Analysis
     audience: business
+    pack: business
     description: "Alternatives, feature comparison, positioning and differentiation."
     sources_to_scan: [README*, "docs/**/*.md"]
     required_inputs:
@@ -184,6 +193,7 @@ docs:
   - id: dev-guide
     title: Developer Guide
     audience: developer
+    pack: developer
     description: "Prerequisites, tested clone-to-running steps, structure, workflows, debugging."
     sources_to_scan: [README*, package.json, pyproject.toml, Makefile, justfile, ".tool-versions", ".nvmrc", ".python-version", "docker-compose*", ".env.example"]
     required_inputs: []
@@ -196,6 +206,7 @@ docs:
   - id: architecture
     title: Architecture
     audience: developer
+    pack: developer
     description: "Components, data flow, Mermaid diagrams, and an ADR-style decision log."
     sources_to_scan: [entry_points, packages, "src/**", "app/**", "docker-compose*", "k8s/**", "docs/adr/**", "docs/decisions/**"]
     required_inputs: []
@@ -208,6 +219,8 @@ docs:
   - id: api-reference
     title: API Reference
     audience: developer
+    pack: developer
+    needs: [openapi, routes]
     description: "Auth, endpoints, request/response examples and error codes (OpenAPI first, else routes)."
     sources_to_scan: [openapi, routes, "**/schemas/**", "**/dto/**", "**/middleware/**auth*"]
     required_inputs:
@@ -221,6 +234,8 @@ docs:
   - id: data-model
     title: Data Model
     audience: developer
+    pack: developer
+    needs: [database]
     description: "ERD from schema/migrations/ORM models, fields, indexes and relationships."
     sources_to_scan: [database, "prisma/schema.prisma", "**/models/**", "**/migrations/**", "**/entities/**", "db/schema.rb"]
     required_inputs: []
@@ -233,6 +248,7 @@ docs:
   - id: contributing
     title: Contributing Guide
     audience: developer
+    pack: developer
     description: "Branching, commit style, PR checklist, code style and review, inferred from config and history."
     sources_to_scan: [CONTRIBUTING*, ".github/PULL_REQUEST_TEMPLATE*", ".eslintrc*", "eslint.config.*", ".prettierrc*", "ruff.toml", "pyproject.toml", ".pre-commit-config.yaml", ".editorconfig", "git log --oneline -50", ci]
     required_inputs: []
@@ -245,6 +261,8 @@ docs:
   - id: testing-strategy
     title: Testing Strategy
     audience: developer
+    pack: developer
+    needs: [tests]
     description: "Test layers, frameworks, locations, coverage, how to run and what to add."
     sources_to_scan: [tests, "jest.config*", "vitest.config*", "pytest.ini", "pyproject.toml", "playwright.config*", "cypress.config*", ".coveragerc", ci]
     required_inputs:
@@ -258,6 +276,8 @@ docs:
   - id: cicd-deployment
     title: CI/CD and Deployment
     audience: developer
+    pack: developer
+    needs: [ci, infra]
     description: "Pipelines, environments, release process and rollback."
     sources_to_scan: [ci, infra, Dockerfile*, "docker-compose*", "*.tf", "k8s/**", "helm/**", "vercel.json", "netlify.toml", "fly.toml", "Procfile"]
     required_inputs:
@@ -272,6 +292,8 @@ docs:
   - id: env-config-reference
     title: Environment and Configuration Reference
     audience: developer
+    pack: developer
+    needs: [env_vars]
     description: "Env vars, config files and feature flags: names, types, purpose, required. Never values."
     sources_to_scan: [env_vars, ".env.example", ".env.sample", "config/**", "**/settings.py", "**/config.*"]
     required_inputs: []
@@ -284,6 +306,7 @@ docs:
   - id: security-threat-model
     title: Security Threat Model
     audience: developer
+    pack: developer
     description: "Assets, trust boundaries, STRIDE table and mitigations."
     sources_to_scan: [routes, "**/middleware/**", "**/auth/**", env_vars, infra, dependencies, "SECURITY*"]
     required_inputs:
@@ -297,6 +320,8 @@ docs:
   - id: dependency-inventory
     title: Dependency Inventory
     audience: developer
+    pack: developer
+    needs: [dependencies]
     description: "Direct dependencies, versions, licences, and outdated or risky flags."
     sources_to_scan: [dependencies, "package-lock.json", "poetry.lock", "uv.lock", "go.sum", "Cargo.lock"]
     required_inputs: []
@@ -309,6 +334,7 @@ docs:
   - id: tech-debt-register
     title: Tech Debt Register
     audience: developer
+    pack: developer
     description: "Known debt items with impact, effort, priority and suggested fix."
     sources_to_scan: ["grep: TODO|FIXME|HACK|XXX|shortcut:", dependencies, tests]
     required_inputs: []
@@ -321,6 +347,8 @@ docs:
   - id: integration-guide
     title: Integration Guide
     audience: developer
+    pack: developer
+    needs: [openapi, routes]
     description: "How external developers integrate: auth flow, webhooks, rate limits, SDK snippets, versioning."
     sources_to_scan: [openapi, routes, "**/webhooks/**", "**/middleware/**rate*", "sdk/**", "clients/**"]
     required_inputs:
@@ -335,6 +363,7 @@ docs:
   - id: upgrade-migration-guide
     title: Upgrade and Migration Guide
     audience: developer
+    pack: user
     description: "Breaking changes between versions and step-by-step upgrade instructions."
     sources_to_scan: [CHANGELOG*, "git tags", "git log --oneline", database, "**/migrations/**"]
     required_inputs:
@@ -349,6 +378,7 @@ docs:
   - id: runbook
     title: Runbook
     audience: ops
+    pack: ops
     description: "Start/stop, health checks, routine tasks and common fixes."
     sources_to_scan: [scripts, infra, "docker-compose*", "k8s/**", "Procfile", routes]
     required_inputs:
@@ -363,6 +393,7 @@ docs:
   - id: incident-response
     title: Incident Response
     audience: ops
+    pack: ops
     description: "Severity levels, roles, comms, escalation and a postmortem template."
     sources_to_scan: [infra, "docs/**/incident*", "docs/**/postmortem*"]
     required_inputs:
@@ -377,6 +408,7 @@ docs:
   - id: monitoring-slos
     title: Monitoring and SLOs
     audience: ops
+    pack: ops
     description: "Signals, dashboards, alerts, SLIs/SLOs and error budgets."
     sources_to_scan: [third_party, "**/health*", "**/metrics*", "prometheus*", "grafana/**", "datadog*", "sentry*", "otel*"]
     required_inputs:
@@ -390,6 +422,8 @@ docs:
   - id: backup-dr
     title: Backup and Disaster Recovery
     audience: ops
+    pack: ops
+    needs: [database]
     description: "What is backed up, how often, RPO/RTO, and restore procedures."
     sources_to_scan: [database, infra, "*.tf", "k8s/**", "scripts/**backup*"]
     required_inputs:
@@ -403,6 +437,7 @@ docs:
   - id: troubleshooting-faq
     title: Troubleshooting and FAQ
     audience: ops
+    pack: ops
     description: "Symptoms, causes and fixes for common problems, plus frequent questions."
     sources_to_scan: ["**/errors*", "**/exceptions*", README*, "docs/**/faq*", "GitHub issues (if available)"]
     required_inputs: []
@@ -415,6 +450,8 @@ docs:
   - id: third-party-services
     title: Third-Party Services Inventory
     audience: ops
+    pack: ops
+    needs: [third_party]
     description: "External services used, env vars, owner, plan/cost and what breaks if each is down."
     sources_to_scan: [third_party, env_vars, dependencies, infra]
     required_inputs:
@@ -429,6 +466,7 @@ docs:
   - id: user-guide
     title: User Guide
     audience: user
+    pack: user
     description: "Task-oriented guide for end users (CLI/API usage when there is no UI)."
     sources_to_scan: [routes, "src/**/pages/**", "app/**/page.*", "src/**/screens/**", "lib/**/screens/**", README*, entry_points]
     required_inputs:
@@ -442,6 +480,7 @@ docs:
   - id: quick-start
     title: Quick Start
     audience: user
+    pack: user
     description: "Get from zero to first success in five minutes."
     sources_to_scan: [README*, entry_points, scripts, routes]
     required_inputs: []
@@ -454,6 +493,7 @@ docs:
   - id: admin-guide
     title: Admin Guide
     audience: user
+    pack: user
     description: "Admin tasks: users and roles, settings, maintenance."
     sources_to_scan: ["**/admin/**", "**/roles*", "**/permissions*", routes, env_vars]
     required_inputs: []
@@ -466,6 +506,7 @@ docs:
   - id: release-notes
     title: Release Notes
     audience: user
+    pack: user
     description: "What changed per version, from tags, git log and CHANGELOG."
     sources_to_scan: [CHANGELOG*, "git tags", "git log --oneline"]
     required_inputs: []
@@ -478,6 +519,7 @@ docs:
   - id: onboarding-deck-outline
     title: Onboarding Deck Outline
     audience: user
+    pack: user
     description: "Slide-by-slide outline for onboarding new team members or customers."
     sources_to_scan: [README*, scan.json]
     required_inputs:
@@ -492,6 +534,7 @@ docs:
   - id: privacy-data-handling
     title: Privacy and Data Handling
     audience: governance
+    pack: handover
     description: "Data inventory, purposes, retention, subprocessors and rights handling. Template, not legal advice."
     sources_to_scan: [database, third_party, "**/analytics*", "**/logging*"]
     required_inputs:
@@ -507,6 +550,7 @@ docs:
   - id: compliance-checklist
     title: Compliance Checklist
     audience: governance
+    pack: handover
     description: "GDPR / SOC 2 / HIPAA checklists with repo evidence. Template, not legal advice."
     sources_to_scan: [ci, infra, "**/auth/**", "SECURITY*", database, third_party]
     required_inputs:
@@ -520,6 +564,7 @@ docs:
   - id: support-sla
     title: Support and SLA
     audience: governance
+    pack: handover
     description: "Support tiers, hours, response/resolution targets and escalation. Template, not legal advice."
     sources_to_scan: [README*, "SUPPORT*", ".github/ISSUE_TEMPLATE/**"]
     required_inputs:
@@ -535,6 +580,7 @@ docs:
   - id: handover
     title: Handover Document
     audience: governance
+    pack: handover
     description: "Everything a new team needs to take over: state, access, knowledge, open issues."
     sources_to_scan: [scan.json, README*, CODEOWNERS, "git log --since=3.months", "grep: TODO|FIXME"]
     required_inputs:

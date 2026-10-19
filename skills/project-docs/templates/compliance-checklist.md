@@ -27,8 +27,8 @@ Status values: "evidence found" (cite path), "not found", "needs review". NEVER 
 | Right to erasure implemented | {{status}} | |
 | Data retention limits enforced | {{status}} | |
 | Records of processing activities | needs review | |
-| DPA with each subprocessor | needs review | See [Third-Party Services](third-party-services.md) |
-| Breach notification process (72 h) | {{status}} | See [Incident Response](incident-response.md) |
+| DPA with each subprocessor | needs review | See Ops pack, Third-Party Services |
+| Breach notification process (72 h) | {{status}} | See Ops pack, Incident Response |
 | Encryption in transit | {{status}} | |
 | Cross-border transfer safeguards | needs review | |
 

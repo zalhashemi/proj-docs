@@ -1,6 +1,7 @@
-/* project-docs print stylesheet.
-   Every colour and font comes from CSS variables injected by build_pdf.py from theme.json.
-   @page rules (size, running header/footer) are generated per document by build_pdf.py,
+/* project-docs print stylesheet: the Spectrum system (after Otl Aicher's Munich '72 identity).
+   Each pack owns one flat colour (--pack, from theme.json `packs`, else primary); flat fields, sharp
+   corners and a fixed grid do the wayfinding. Every colour and font comes from CSS variables injected by
+   build_pdf.py. @page rules (size, running heads, chapter tabs) are generated per document by build_pdf.py,
    because margin boxes need literal strings. Works in WeasyPrint and Chromium. */
 
 html { font-size: 10pt; }
@@ -9,7 +10,7 @@ body {
   font-family: var(--font-body);
   color: var(--text);
   background: var(--bg);
-  line-height: 1.5;
+  line-height: 1.55;
   orphans: 3;
   widows: 3;
   -webkit-print-color-adjust: exact;
@@ -22,175 +23,192 @@ body {
   position: relative;
   height: var(--page-h);
   box-sizing: border-box;
-  padding: 26mm 22mm;
-  background: var(--cover-bg);
-  color: var(--cover-text);
+  background: var(--bg);
   break-after: page;
   overflow: hidden;
 }
-.cover .band {
-  position: absolute; left: 0; right: 0; bottom: 0; height: 9mm;
-  background: var(--accent);
-}
-.cover .logo-chip {
-  display: inline-block;
-  background: #ffffff;
-  border-radius: 3mm;
-  padding: 3.5mm 5mm;
-  margin-bottom: 22mm;
-}
-.cover .logo-chip img { height: 14mm; max-width: 60mm; display: block; }
-.cover .kicker {
-  font-family: var(--font-body);
-  font-size: 9pt; font-weight: 600; letter-spacing: 0.18em; text-transform: uppercase;
-  opacity: 0.85; margin: 0 0 5mm;
+.cover .field {
+  position: relative;
+  height: 58%;
+  box-sizing: border-box;
+  background: var(--cover-bg);
+  color: var(--cover-text);
+  padding: 0 22mm 16mm;
 }
 .cover h1.cover-title {
+  position: absolute; left: 22mm; right: 22mm; bottom: 16mm;
   font-family: var(--font-heading);
-  font-size: 34pt; line-height: 1.1; font-weight: 700;
-  color: var(--cover-text); margin: 0 0 5mm; border: 0; padding: 0;
+  font-size: 46pt; line-height: 1; font-weight: 700; letter-spacing: -0.03em;
+  color: var(--cover-text); margin: 0; border: 0; padding: 0;
 }
-.cover .subtitle { font-size: 14pt; margin: 0 0 9mm; opacity: 0.92; }
-.cover .rule { width: 22mm; height: 1.2mm; background: var(--accent); margin-bottom: 9mm; }
+.cover .strip { display: flex; align-items: flex-start; height: 9mm; }
+.cover .strip i { flex: 1; height: 3.5mm; }
+.cover .strip i.on { height: 9mm; }
+.cover .below { position: relative; padding: 14mm 22mm 0; }
+.cover .logo { position: absolute; right: 22mm; top: 14mm; height: 14mm; max-width: 60mm; }
+.cover .project {
+  font-family: var(--font-heading); font-size: 22pt; font-weight: 700; letter-spacing: -0.02em;
+  margin: 0 0 2mm; color: var(--text);
+}
+.cover .subtitle { font-size: 12pt; margin: 0; color: var(--muted); }
 .cover .meta {
-  position: absolute; left: 22mm; right: 22mm; bottom: 22mm;
-  font-size: 9pt; border-collapse: collapse; width: auto;
+  position: absolute; left: 22mm; bottom: 22mm;
+  font-family: var(--font-heading); font-size: 8.5pt; border-collapse: collapse; width: auto;
 }
-.cover .meta td { padding: 1.2mm 8mm 1.2mm 0; border: 0; background: none; color: var(--cover-text); }
-.cover .meta td.k { opacity: 0.75; text-transform: uppercase; letter-spacing: 0.08em; font-size: 7.5pt; }
+.cover .meta td { padding: 1.2mm 10mm 1.2mm 0; border: 0; background: none; color: var(--text); }
+.cover .meta td.k { color: var(--muted); }
 .cover .badge {
-  display: inline-block; margin-top: 3mm;
-  border: 1px solid var(--cover-text); border-radius: 1mm;
-  padding: 0.8mm 2.5mm; font-size: 7.5pt; font-weight: 700; letter-spacing: 0.12em;
+  position: absolute; right: 22mm; bottom: 22mm;
+  font-family: var(--font-heading); font-size: 8pt; font-weight: 700;
+  background: var(--text); color: var(--bg); padding: 1.2mm 3mm;
 }
 
 /* ---------------------------------------------------------------- table of contents */
 .toc { page: toc; break-after: page; }
-.toc h2 { margin-top: 0; }
-.toc-table { width: 100%; border-collapse: collapse; font-size: 10pt; }
-.toc-table td { border: 0; background: none !important; padding: 1.6mm 0; vertical-align: bottom; }
+.toc h2 {
+  font-size: 24pt; letter-spacing: -0.02em; margin: 0 0 9mm; padding: 0; border: 0;
+}
+.toc h2::before { display: none; }
+.toc-table { width: 100%; border-collapse: collapse; font-family: var(--font-heading); font-size: 9pt; counter-reset: ch; }
+.toc-table td { border: 0; background: none !important; padding: 1mm 0; vertical-align: baseline; }
 .toc-table tr { break-inside: avoid; }
-.toc-table td.t { border-bottom: 0.6pt dotted var(--border); }
 .toc-table td.n { width: 12mm; text-align: right; color: var(--muted); font-variant-numeric: tabular-nums; }
-.toc-table a { color: var(--text); text-decoration: none; }
-.toc-table tr.l1 td { font-weight: 700; padding-top: 3.5mm; color: var(--primary); }
-.toc-table tr.l1 a { color: var(--primary); }
-.toc-table tr.l3 td.t { padding-left: 6mm; font-size: 9pt; color: var(--muted); }
-.toc-table tr.l3 a { color: var(--muted); }
+.toc-table a { color: var(--muted); text-decoration: none; }
+.toc-table tr.l1 td { padding-top: 4.5mm; padding-bottom: 1.5mm; font-size: 11pt; font-weight: 600; }
+.toc-table tr.l1 a { color: var(--text); }
+.toc-table tr.l1 td.n { color: var(--text); }
+.toc-table tr.l1 td.t::before {
+  counter-increment: ch; content: counter(ch, decimal-leading-zero);
+  display: inline-block; width: 12mm; color: var(--pack); font-weight: 700;
+}
+.toc-table tr.l2 td.t, .toc-table tr.l3 td.t { padding-left: 12mm; }
+.toc-table tr.l3 td.t { padding-left: 18mm; font-size: 8.5pt; }
 a.toc-num::after { content: target-counter(attr(href), page); }  /* WeasyPrint */
-a.toc-num { color: var(--muted); text-decoration: none; }
+a.toc-num { color: inherit; text-decoration: none; }
+
+/* ---------------------------------------------------------------- chapters (pack PDFs) */
+/* build_pdf.py gives every chapter page a full-bleed pack-colour band in the left margin
+   (number, title, project); the column here carries the title and opens on a tint field. */
+section.chapter + section.chapter { break-before: page; }
+section.chapter > h1 { font-size: 30pt; line-height: 1.05; letter-spacing: -0.03em; margin: 0 0 7mm; }
+section.chapter > h1 + p {
+  background: var(--pack-tint); padding: 4.5mm 5mm; font-size: 11pt; line-height: 1.5; margin-bottom: 8mm;
+}
 
 /* ---------------------------------------------------------------- headings */
-h1, h2, h3, h4 { font-family: var(--font-heading); line-height: 1.25; break-after: avoid; }
-h1 { font-size: 24pt; color: var(--primary); margin: 0 0 6mm; }
-h1.doc-title { break-before: page; padding-bottom: 3mm; border-bottom: 2pt solid var(--accent); }
-h2 {
-  font-size: 15.5pt; color: var(--primary); font-weight: 700;
-  margin: 9mm 0 3mm; padding-bottom: 1.5mm; border-bottom: 0.8pt solid var(--border);
+h1, h2, h3, h4 { font-family: var(--font-heading); line-height: 1.2; break-after: avoid; color: var(--text); }
+h1 { font-size: 26pt; font-weight: 700; letter-spacing: -0.025em; margin: 0 0 8mm; }
+h1.doc-title, .doc:not(.pack) > h1 {
+  padding-top: 4mm; border-top: 4mm solid var(--pack);
 }
-h3 { font-size: 12pt; color: var(--secondary); font-weight: 600; margin: 6mm 0 2mm; }
-h4 { font-size: 10pt; color: var(--text); font-weight: 700; margin: 4mm 0 1.5mm; }
-.doc > h2:first-child { margin-top: 0; }
+h1.doc-title, .doc:not(.pack) > h1:not(:first-child) { break-before: page; }
+h2 { font-size: 15pt; font-weight: 700; letter-spacing: -0.015em; margin: 10mm 0 3.5mm; }
+h2::before {
+  content: ""; display: inline-block; width: 2.6mm; height: 2.6mm; margin-right: 2.6mm;
+  background: var(--pack); vertical-align: 0.5mm;
+}
+h3 { font-size: 11.5pt; font-weight: 700; margin: 7mm 0 2mm; }
+h4 { font-size: 10pt; font-weight: 600; color: var(--muted); margin: 5mm 0 1.5mm; }
+.doc > h2:first-child, section.chapter > h1 + h2 { margin-top: 0; }
 
-p { margin: 0 0 2.6mm; }
-a { color: var(--primary); }
+p { margin: 0 0 3mm; }
+a { color: var(--pack); text-decoration-thickness: 0.5pt; text-underline-offset: 1.5pt; }
 strong { font-weight: 600; }
-hr { border: 0; border-top: 0.8pt solid var(--border); margin: 6mm 0; }
-ul, ol { margin: 0 0 3mm; padding-left: 6mm; }
-li { margin: 0.6mm 0; }
+hr { border: 0; border-top: 0.6pt solid var(--border); margin: 8mm 0; }
+ul, ol { margin: 0 0 3mm; padding-left: 5mm; }
+li { margin: 0.8mm 0; }
+li::marker { color: var(--pack); }
 li > p { margin: 0; }
 .page-break { break-after: page; }
 
 /* ---------------------------------------------------------------- tables */
 table {
-  width: 100%; border-collapse: collapse; margin: 2mm 0 5mm;
-  font-size: 8.6pt; line-height: 1.35; overflow-wrap: anywhere;
+  width: 100%; border-collapse: collapse; margin: 3mm 0 6mm;
+  font-family: var(--font-heading); font-size: 8.4pt; line-height: 1.4; overflow-wrap: break-word;
 }
 thead { display: table-header-group; }
 tr { break-inside: avoid; }
 th {
-  background: var(--primary); color: #ffffff; font-weight: 600; text-align: left;
-  padding: 1.8mm 2.2mm; border: 0.6pt solid var(--primary);
+  color: var(--pack); font-weight: 700; text-align: left;
+  padding: 1.6mm 3mm 1.6mm 0; border-bottom: 1.4pt solid var(--pack);
 }
-td { padding: 1.6mm 2.2mm; border: 0.6pt solid var(--border); vertical-align: top; }
-tbody tr:nth-child(even) td { background: var(--surface); }
+td { padding: 1.7mm 3mm 1.7mm 0; border-bottom: 0.5pt solid var(--border); vertical-align: top; }
 td code, th code { font-size: 7.8pt; word-break: normal; overflow-wrap: break-word; }  /* keep tokens whole unless they cannot fit */
-table.kv td:first-child { width: 1%; white-space: nowrap; font-weight: 600; color: var(--primary); }
-table.kv tr:first-child td { border-top: 1.5pt solid var(--primary); }
-td.on { background: var(--primary) !important; }           /* gantt bar cell (■) */
+table.kv { background: var(--pack-tint); }
+table.kv td { border-bottom: 0.5pt solid var(--bg); padding-left: 3mm; }
+table.kv td:first-child { width: 1%; white-space: nowrap; font-weight: 700; color: var(--pack); }
+td.on { background: var(--pack) !important; }           /* gantt bar cell (■) */
 .gantt table { font-size: 7.6pt; }
-.gantt td, .gantt th { text-align: center; padding: 1.2mm 0.8mm; }
-.gantt td:first-child, .gantt th:first-child { text-align: left; width: 32mm; padding-left: 2mm; }
+.gantt td, .gantt th { text-align: center; padding: 1.2mm 0.8mm; border-left: 0.5pt solid var(--bg); }
+.gantt td:first-child, .gantt th:first-child { text-align: left; width: 32mm; padding-left: 0; }
 
 /* ---------------------------------------------------------------- code */
 code, kbd, pre { font-family: var(--font-mono); font-variant-ligatures: none; }  /* -> stays copy-pasteable */
-code {
-  font-size: 8.6pt; background: var(--surface); border: 0.5pt solid var(--border);
-  border-radius: 1mm; padding: 0.2mm 1mm; overflow-wrap: anywhere;
-}
+code { font-size: 8.4pt; background: var(--surface); padding: 0.2mm 1mm; overflow-wrap: anywhere; }
 pre {
-  font-size: 8.2pt; line-height: 1.45;
-  background: var(--surface); border: 0.6pt solid var(--border); border-left: 2.5pt solid var(--primary);
-  border-radius: 1.2mm; padding: 3mm 3.5mm; margin: 2mm 0 4mm;
+  font-size: 8.1pt; line-height: 1.5;
+  background: var(--surface); padding: 3.5mm 4mm; margin: 2mm 0 5mm;
   white-space: pre-wrap; word-break: break-all;
   break-inside: avoid;  /* engines still split blocks taller than a page */
 }
-pre code { background: none; border: 0; padding: 0; font-size: inherit; }
+pre code { background: none; padding: 0; font-size: inherit; }
 .highlight { margin: 0; }
 /* Syntax colours derived from the theme (light palette, print-safe). */
-.highlight .k, .highlight .kd, .highlight .kn, .highlight .kr, .highlight .kp, .highlight .ow { color: var(--primary); font-weight: 600; }
+.highlight .k, .highlight .kd, .highlight .kn, .highlight .kr, .highlight .kp, .highlight .ow { color: var(--pack); font-weight: 700; }
 .highlight .kc, .highlight .kt, .highlight .nb, .highlight .bp { color: var(--secondary); }
 .highlight .s, .highlight .s1, .highlight .s2, .highlight .sb, .highlight .sc, .highlight .sd,
 .highlight .se, .highlight .sh, .highlight .si, .highlight .sx, .highlight .sr, .highlight .ss { color: var(--success); }
 .highlight .c, .highlight .c1, .highlight .cm, .highlight .ch, .highlight .cs, .highlight .cp, .highlight .cpf { color: var(--muted); font-style: italic; }
 .highlight .m, .highlight .mi, .highlight .mf, .highlight .mh, .highlight .mo, .highlight .il { color: var(--danger); }
-.highlight .nf, .highlight .fm, .highlight .nc, .highlight .nn, .highlight .ne { color: var(--accent); font-weight: 600; }
-.highlight .nt { color: var(--primary); }
+.highlight .nf, .highlight .fm, .highlight .nc, .highlight .nn, .highlight .ne { color: var(--accent); font-weight: 700; }
+.highlight .nt { color: var(--pack); }
 .highlight .na, .highlight .nv, .highlight .vi, .highlight .no { color: var(--secondary); }
 .highlight .gd { color: var(--danger); }
 .highlight .gi { color: var(--success); }
 .highlight .err { color: var(--danger); }
 
 /* ---------------------------------------------------------------- callouts */
+/* A flat tint field with a square label plate; the plate's colour and word carry the kind. */
 .callout {
-  break-inside: avoid; margin: 3mm 0 4.5mm; padding: 2.6mm 3.5mm 1mm;
-  border-left: 3pt solid var(--primary); background: var(--primary-tint); border-radius: 0 1.2mm 1.2mm 0;
+  break-inside: avoid; margin: 3mm 0 5mm; padding: 3mm 4mm 1mm;
+  background: var(--pack-tint);
 }
 .callout .callout-title {
-  font-size: 7.5pt; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase;
-  margin: 0 0 1.2mm; color: var(--primary);
+  display: inline-block; font-family: var(--font-heading); font-size: 7.5pt; font-weight: 700;
+  margin: 0 0 1.8mm; padding: 0.6mm 2mm; background: var(--pack); color: #ffffff;
 }
-.callout-tip { border-left-color: var(--success); background: var(--success-tint); }
-.callout-tip .callout-title { color: var(--success); }
-.callout-important { border-left-color: var(--accent); background: var(--accent-tint); }
-.callout-important .callout-title { color: var(--accent); }
-.callout-warning, .callout-caution { border-left-color: var(--danger); background: var(--danger-tint); }
-.callout-warning .callout-title, .callout-caution .callout-title { color: var(--danger); }
-/* Assumptions must be spotted at a glance: dashed amber frame, hatched background. */
+.callout-tip { background: var(--success-tint); }
+.callout-tip .callout-title { background: var(--success); }
+.callout-important { background: var(--accent-tint); }
+.callout-important .callout-title { background: var(--accent); }
+.callout-warning, .callout-caution { background: var(--danger-tint); }
+.callout-warning .callout-title, .callout-caution .callout-title { background: var(--danger); }
+/* Assumptions must be spotted at a glance, in colour or greyscale: a dashed frame over hatching. */
 .callout-assumption {
-  border: 1.2pt dashed var(--warning); border-left: 4pt solid var(--warning); border-radius: 1.2mm;
-  background: repeating-linear-gradient(135deg, var(--warning-tint) 0 3mm, var(--bg) 3mm 6mm);
+  border: 1.2pt dashed var(--warning);
+  background: repeating-linear-gradient(135deg, var(--warning-tint) 0 2.5mm, var(--bg) 2.5mm 5mm);
 }
-.callout-assumption .callout-title { color: var(--warning); }
+.callout-assumption .callout-title { background: var(--warning); }
 .tag {
-  display: inline-block; font-size: 6.8pt; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase;
-  border-radius: 1mm; padding: 0 1.2mm; vertical-align: 1pt; line-height: 1.5; white-space: nowrap;
+  display: inline-block; font-family: var(--font-heading); font-size: 6.8pt; font-weight: 700;
+  padding: 0 1.2mm; vertical-align: 1pt; line-height: 1.5; white-space: nowrap;
 }
 .tag-assumption { color: var(--warning); border: 0.8pt dashed var(--warning); background: var(--warning-tint); }
-.tag-untested { color: var(--muted); border: 0.8pt dashed var(--muted); }
+.tag-untested { color: var(--muted); border: 0.8pt dotted var(--muted); }
 
 /* ---------------------------------------------------------------- figures, misc */
-figure { margin: 3mm 0 5mm; break-inside: avoid; text-align: center; }
+figure { margin: 4mm 0 6mm; break-inside: avoid; text-align: center; }
 figure img { max-width: 100%; max-height: 120mm; }
-figcaption { font-size: 8pt; color: var(--muted); margin-top: 1.5mm; font-style: italic; }
+figcaption { font-family: var(--font-heading); font-size: 7.8pt; color: var(--muted); margin-top: 2mm; }
 img { max-width: 100%; }
 p.diagram-fallback { font-size: 8pt; color: var(--muted); font-style: italic; margin: 0 0 1mm; break-after: avoid; }
 figure.diagram img { width: auto; max-width: 100%; max-height: 80mm; }  /* don't blow small diagrams up */
-blockquote { margin: 3mm 0; padding: 1mm 4mm; border-left: 2pt solid var(--border); color: var(--muted); }
+blockquote { margin: 4mm 0; padding: 0 0 0 6mm; color: var(--muted); font-style: italic; }
 .task-list-item { list-style: none; margin-left: -5mm; }
 .task-list-item input { margin-right: 1.5mm; }
-.footnote { font-size: 8pt; color: var(--muted); border-top: 0.6pt solid var(--border); margin-top: 8mm; }
+.footnote { font-size: 8pt; color: var(--muted); margin-top: 10mm; }
 .footnote hr { display: none; }
 sup { line-height: 0; }
-.missing-link { color: var(--muted); }
+.missing-link { color: var(--text); }
 .disclaimer { font-size: 8.5pt; color: var(--muted); font-style: italic; }
+::selection { background: var(--pack-tint); }

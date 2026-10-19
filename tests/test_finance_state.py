@@ -89,13 +89,18 @@ def test_finance_cli_writes_charts(tmp_path, capsys):
 
 # ---------------------------------------------------------------- state
 
+def pack_md(pack, chapters):
+    head = f"---\ntitle: X\nversion: 1.0.0\ndate: 2026-01-01\npack: {pack}\nchapters: [{', '.join(chapters)}]\n---\n\n"
+    return head + "".join(f"# {c} {{#ch-{c}}}\n\n## A\n\n" for c in chapters)
+
+
 @pytest.fixture
 def project(fixture_copy):
     root = fixture_copy("fastapi-service")
     docs = root / "docs"
     (docs / ".project-docs").mkdir(parents=True)
-    for doc_id in ("api-reference", "dev-guide", "data-model"):
-        (docs / f"{doc_id}.md").write_text(f"---\ntitle: X\nversion: 1.0.0\ndate: 2026-01-01\ndoc_id: {doc_id}\n---\n\n## A\n")
+    (docs / "developer.md").write_text(pack_md("developer", ["dev-guide", "api-reference", "data-model"]))
+    (docs / "business.md").write_text(pack_md("business", ["project-brief"]))
     scan_project.main([str(root), "--out", str(docs / ".project-docs/scan.json")])
     assert state.main(["--docs-dir", str(docs), "set-stage", "complete"]) == 0
     assert state.main(["--docs-dir", str(docs), "record"]) == 0
@@ -108,50 +113,87 @@ def diff(root, capsys):
     return json.loads(capsys.readouterr().out)
 
 
+def rescan(root):
+    scan_project.main([str(root), "--out", str(root / "docs/.project-docs/scan.json")])
+
+
 def test_no_changes(project, capsys):
     d = diff(project, capsys)
-    assert d["changed"] == [] and d["unchanged"] == 3
+    assert d["changed"] == [] and d["unchanged"] == 2
 
 
-def test_new_route_flags_only_api_reference(project, capsys):
+def test_packs_skip_chapters_without_evidence(project, fixture_copy, capsys):
+    capsys.readouterr()
+    state.main(["--docs-dir", str(project / "docs"), "packs"])
+    p = json.loads(capsys.readouterr().out)
+    assert {"api-reference", "data-model"} <= set(p["developer"]["chapters"])   # routes and DB found
+    assert "backup-dr" in p["ops"]["chapters"]
+    assert "forecast-1yr" in p["business"]["chapters"]                         # no `needs`: input-driven
+    spa = fixture_copy("react-tailwind-app")                                    # no backend
+    scan_project.main([str(spa), "--out", str(spa / "docs/.project-docs/scan.json")])
+    capsys.readouterr()
+    state.main(["--docs-dir", str(spa / "docs"), "packs"])
+    p = json.loads(capsys.readouterr().out)
+    assert p["developer"]["skipped"]["data-model"] == "no database found"
+    assert p["developer"]["skipped"]["api-reference"] == "no openapi or routes found"
+    assert "backup-dr" in p["ops"]["skipped"]
+
+
+def test_has_evidence():
+    assert not state.has_evidence({"models": [], "migrations": [], "engines": []})
+    assert state.has_evidence({"models": [], "engines": ["postgres"]})
+    assert not state.has_evidence([]) and state.has_evidence([{"x": 1}])
+
+
+def test_new_route_flags_only_api_reference_chapter(project, capsys):
     orders = project / "app/routers/orders.py"
     orders.write_text(orders.read_text() + '\n\n@router.patch("/{order_id}")\ndef update(order_id: int):\n    pass\n')
-    scan_project.main([str(project), "--out", str(project / "docs/.project-docs/scan.json")])
+    rescan(project)
     d = diff(project, capsys)
-    assert [c["doc"] for c in d["changed"]] == ["api-reference"]
+    assert [c["pack"] for c in d["changed"]] == ["developer"]
     c = d["changed"][0]
-    assert c["keys"] == ["routes"] and c["summary"] == ["route PATCH /orders/{order_id} added"]
     assert c["hand_edited"] is False and c["needs_patch"] is True
+    included = [ch for ch in c["chapters"] if ch["included"]]
+    assert [ch["chapter"] for ch in included] == ["api-reference"]
+    assert included[0]["keys"] == ["routes"] and included[0]["summary"] == ["route PATCH /orders/{order_id} added"]
+    # integration-guide was left out but its evidence (routes) changed: offered, not included
+    assert {ch["chapter"] for ch in c["chapters"] if not ch["included"]} == {"integration-guide"}
 
 
 def test_new_script_and_env_var_flag_dev_guide(project, capsys):
     mk = project / "Makefile"
     mk.write_text(mk.read_text() + "\nformat:\n\truff format .\n")
     (project / ".env.example").write_text((project / ".env.example").read_text() + "REDIS_URL=\n")
-    scan_project.main([str(project), "--out", str(project / "docs/.project-docs/scan.json")])
+    rescan(project)
     d = diff(project, capsys)
-    dev = next(c for c in d["changed"] if c["doc"] == "dev-guide")
-    assert "script format added" in dev["summary"] and "env var REDIS_URL added" in dev["summary"]
-    assert "api-reference" not in [c["doc"] for c in d["changed"]]
+    ch = {c["chapter"]: c for c in d["changed"][0]["chapters"]}
+    assert "script format added" in ch["dev-guide"]["summary"] and "env var REDIS_URL added" in ch["dev-guide"]["summary"]
+    assert "api-reference" not in ch
 
 
 def test_hand_edit_reported_not_overwritten(project, capsys):
-    md = project / "docs/data-model.md"
+    md = project / "docs/developer.md"
     md.write_text(md.read_text() + "\nMy own note.\n")
     d = diff(project, capsys)
-    c = next(c for c in d["changed"] if c["doc"] == "data-model")
+    c = next(c for c in d["changed"] if c["pack"] == "developer")
     assert c["hand_edited"] is True and c["needs_patch"] is False
     assert "My own note." in md.read_text()
 
 
+def test_record_rejects_chapter_from_other_pack(project):
+    (project / "docs/ops.md").write_text(pack_md("ops", ["runbook", "prd"]))
+    with pytest.raises(SystemExit, match="not in pack"):
+        state.main(["--docs-dir", str(project / "docs"), "record", "--pack", "ops"])
+
+
 def test_bump_and_rerecord(project, capsys):
     capsys.readouterr()
-    state.main(["--docs-dir", str(project / "docs"), "bump", "api-reference"])
+    state.main(["--docs-dir", str(project / "docs"), "bump", "developer"])
     out = json.loads(capsys.readouterr().out)
     assert out["version"] == ["1.0.0", "1.0.1"]
-    text = (project / "docs/api-reference.md").read_text()
+    text = (project / "docs/developer.md").read_text()
     assert "version: 1.0.1" in text and "## A" in text
-    state.main(["--docs-dir", str(project / "docs"), "record", "--doc", "api-reference"])
+    state.main(["--docs-dir", str(project / "docs"), "record", "--pack", "developer"])
     assert diff(project, capsys)["changed"] == []
 
 

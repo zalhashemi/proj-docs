@@ -1,15 +1,19 @@
 <section class="cover">
-  {% if logo %}<div class="logo-chip"><img src="{{ logo }}" alt="{{ project }} logo"></div>{% else %}<div style="height: 36mm"></div>{% endif %}
-  <p class="kicker">{{ project }}</p>
-  <h1 class="cover-title">{{ title }}</h1>
-  {% if subtitle and subtitle != project %}<p class="subtitle">{{ subtitle }}</p>{% endif %}
-  <div class="rule"></div>
+  <div class="field">
+    <h1 class="cover-title">{{ title }}</h1>
+  </div>
+  <div class="strip">{% for c in spectrum %}<i class="{{ 'on' if loop.index0 == current }}" style="background: {{ c }}"></i>{% endfor %}</div>
+  <div class="below">
+    {% if logo %}<img class="logo" src="{{ logo }}" alt="{{ project }} logo">{% endif %}
+    <p class="project">{{ project }}</p>
+    {% if subtitle and subtitle != project %}<p class="subtitle">{{ subtitle }}</p>{% endif %}
+  </div>
   <table class="meta">
     {% if version %}<tr><td class="k">Version</td><td>{{ version }}</td></tr>{% endif %}
+    {% if chapters %}<tr><td class="k">Chapters</td><td>{{ chapters }}</td></tr>{% endif %}
     <tr><td class="k">Date</td><td>{{ date }}</td></tr>
     {% if author %}<tr><td class="k">Author</td><td>{{ author }}</td></tr>{% endif %}
     {% if org %}<tr><td class="k">Organisation</td><td>{{ org }}</td></tr>{% endif %}
   </table>
-  {% if confidential %}<div style="position:absolute; right:22mm; bottom:22mm"><span class="badge">CONFIDENTIAL</span></div>{% endif %}
-  <div class="band"></div>
+  {% if confidential %}<span class="badge">Confidential</span>{% endif %}
 </section>

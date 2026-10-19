@@ -33,8 +33,7 @@ def section(theme: dict) -> str:
         f'{contrast(c[r], "#ffffff"):.1f}:1 on white</td>' for r in c)
     f = theme["fonts"]
     return f"""<section id="{sid}" class="theme-page" style="break-after: page">
-<div style="background:{cover['bg']};color:{cover['text']};padding:7mm 8mm;border-radius:2mm;margin-bottom:6mm">
-  <div style="font-size:8pt;letter-spacing:.15em;text-transform:uppercase;opacity:.85">Theme</div>
+<div style="background:{cover['bg']};color:{cover['text']};padding:7mm 8mm;margin-bottom:6mm">
   <div style="font-family:var(--font-heading);font-size:22pt;font-weight:700">{html.escape(theme.get('label', theme['name']))}</div>
   <div style="font-size:8.5pt;opacity:.9">{html.escape(theme['name'])} · headings {f['heading']} · body {f['body']} · code {f['mono']}</div>
 </div>

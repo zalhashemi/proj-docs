@@ -12,9 +12,10 @@ from _common import SKILL_DIR, contrast, load_json  # noqa: E402
 CATALOG = yaml.safe_load((SKILL_DIR / "catalog.yaml").read_text())
 DOCS = CATALOG["docs"]
 IDS = [d["id"] for d in DOCS]
+PACKS = [p["id"] for p in CATALOG["packs"]]
 
 REQUIRED = {"id", "title", "audience", "description", "sources_to_scan", "required_inputs",
-            "template", "est_pages", "requires_ui", "depends_on", "scan_keys"}
+            "template", "est_pages", "requires_ui", "depends_on", "scan_keys", "pack"}
 AUDIENCES = {"planning", "business", "developer", "ops", "user", "governance"}
 STAGES = {"planning", "complete", "any"}
 INPUT_TYPES = {"text", "number", "money", "choice", "multi", "bool", "list"}
@@ -38,6 +39,8 @@ def test_entry_schema(doc):
     assert isinstance(doc["requires_ui"], bool)
     assert re.fullmatch(r"\d+(-\d+)?", doc["est_pages"])
     assert set(doc["scan_keys"]) <= SCAN_KEYS, set(doc["scan_keys"]) - SCAN_KEYS
+    assert doc["pack"] in PACKS
+    assert set(doc.get("needs", [])) <= set(doc["scan_keys"]), "needs must be watched scan_keys"
     for d in doc["depends_on"]:
         assert d in IDS, f"{doc['id']} depends on unknown {d}"
         assert d != doc["id"]
@@ -71,24 +74,22 @@ def test_shared_inputs_consistent():
     assert {k: v for k, v in seen.items() if len(v) > 1} == {}
 
 
-def test_presets_resolve():
-    for name, ids in CATALOG["presets"].items():
-        for i in ids:
-            assert i == "*" or i in IDS, f"preset {name}: unknown {i}"
-    assert set(CATALOG["presets"]) == {"developer", "business", "user", "ops", "handover", "everything"}
+def test_packs():
+    assert list(PACKS) == ["planning", "developer", "business", "user", "ops", "handover"]
+    assert all({"id", "title", "description"} <= p.keys() for p in CATALOG["packs"])
+    assert all(any(d["pack"] == p for d in DOCS) for p in PACKS), "every pack has chapters"
 
 
 def test_build_plan_is_only_planning_doc():
     assert [d["id"] for d in DOCS if d.get("stage") == "planning"] == ["build-plan"]
-    for ids in CATALOG["presets"].values():
-        assert "build-plan" not in ids
+    assert [d["id"] for d in DOCS if d["pack"] == "planning"] == ["build-plan"]
 
 
 THEMES = sorted((SKILL_DIR / "themes").glob("*.json"))
 
 
 def test_default_themes_present():
-    assert {p.stem for p in THEMES} >= {"clean-light", "midnight", "corporate-blue",
+    assert {p.stem for p in THEMES} >= {"default", "clean-light", "midnight", "corporate-blue",
                                         "warm-editorial", "mono-minimal"}
 
 
@@ -104,6 +105,9 @@ def test_theme(path):
     assert contrast(c["text"], c["surface"]) >= 4.5
     assert contrast(c["primary"], "#ffffff") >= 4.5
     assert contrast(c["muted"], c["bg"]) >= 3.0
+    for col in (t.get("packs") or {}).values():
+        assert contrast("#ffffff", col) >= 4.5
+    assert set(t.get("packs") or {}) in (set(), set(PACKS))
     if "cover" in t:
         assert contrast(t["cover"]["text"], t["cover"]["bg"]) >= 4.5
 

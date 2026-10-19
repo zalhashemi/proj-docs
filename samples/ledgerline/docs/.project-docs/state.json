@@ -1,58 +1,58 @@
 {
-  "version": 1,
+  "version": 2,
   "stage": "complete",
-  "docs": {
-    "api-reference": {
-      "scan_keys": [
-        "openapi",
-        "routes"
+  "packs": {
+    "business": {
+      "chapters": [
+        "forecast-1yr",
+        "budget-resources"
       ],
-      "scan_hash": "407f140fc9e47cf0",
-      "md_hash": "f997b698bfcb03f9",
-      "version": "1.0.0",
-      "recorded": "2026-10-18"
-    },
-    "budget-resources": {
       "scan_keys": [
-        "infra",
-        "third_party",
-        "git"
-      ],
-      "scan_hash": "8cbbafa52f2ef6fc",
-      "md_hash": "213b4c3a73e0f448",
-      "version": "1.0.0",
-      "recorded": "2026-10-18"
-    },
-    "data-model": {
-      "scan_keys": [
-        "database"
-      ],
-      "scan_hash": "3299ceb0196de6d7",
-      "md_hash": "c57599bf731ab927",
-      "version": "1.0.0",
-      "recorded": "2026-10-18"
-    },
-    "forecast-1yr": {
-      "scan_keys": [
+        "git",
         "infra",
         "third_party"
       ],
-      "scan_hash": "26ee85bb453d6193",
-      "md_hash": "1eaf112290503a8d",
+      "scan_hash": "2f0df9bf39ea038b",
+      "md_hash": "68d26f0867e9ac7f",
       "version": "1.0.0",
-      "recorded": "2026-10-18"
+      "recorded": "2026-10-19"
     },
-    "runbook": {
-      "scan_keys": [
-        "scripts",
-        "infra",
-        "ci",
-        "routes"
+    "developer": {
+      "chapters": [
+        "api-reference",
+        "data-model"
       ],
-      "scan_hash": "4aeb59d848e43db9",
-      "md_hash": "a91a21fa71b9fddd",
+      "scan_keys": [
+        "ci",
+        "database",
+        "dependencies",
+        "env_vars",
+        "infra",
+        "openapi",
+        "routes",
+        "tests"
+      ],
+      "scan_hash": "17b374a89323f2e4",
+      "md_hash": "cb8619bccbf4bd32",
       "version": "1.0.0",
-      "recorded": "2026-10-18"
+      "recorded": "2026-10-19"
+    },
+    "ops": {
+      "chapters": [
+        "runbook"
+      ],
+      "scan_keys": [
+        "ci",
+        "database",
+        "infra",
+        "routes",
+        "scripts",
+        "third_party"
+      ],
+      "scan_hash": "cb31785ef7b350f5",
+      "md_hash": "70fa81bf5bbab272",
+      "version": "1.0.0",
+      "recorded": "2026-10-19"
     }
   },
   "scan_snapshot": {
@@ -61,7 +61,7 @@
       "version": "0.9.2",
       "description": "Ledgerline: order and invoice API for B2B wholesalers.",
       "license": null,
-      "file_count": 22,
+      "file_count": 25,
       "code_files": 12
     },
     "languages": {
@@ -332,15 +332,24 @@
       "contributing": null,
       "security": null,
       "codeowners": null,
-      "docs_dir_files": 0
+      "docs_dir_files": 3
     },
     "git": {
-      "is_repo": false
+      "is_repo": true,
+      "remote_name": "origin",
+      "remote_url": "https://github.com/zalhashemi/proj-docs.git",
+      "branch": "main",
+      "commits": 2,
+      "contributors": 1,
+      "first_commit": "2026-10-18",
+      "last_commit": "2026-10-18",
+      "commits_last_90d": 2,
+      "tags": []
     },
     "has_ui": false,
     "ui_evidence": [],
     "stage_hint": "active",
-    "stage_evidence": "12 code files, 0 commits"
+    "stage_evidence": "12 code files, 2 commits"
   },
-  "scan_hash": "7f5572524cde9e43"
+  "scan_hash": "6d16ac16180f9f3f"
 }

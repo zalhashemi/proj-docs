@@ -1,12 +1,12 @@
 # proj-docs: branded PDF documentation for any codebase
 
 A [Claude Code](https://claude.com/claude-code) skill that reads your repository and writes
-**evidence-based project documentation as branded PDFs**: developer guide, architecture, API
-reference, runbook, user guide, 1-year forecast, budget and 30 more. The PDFs use your
-project's own colours, fonts and logo. When the code changes, only the affected sections and
-PDFs are updated.
+**evidence-based project documentation**: one Markdown pack per category (Developer, Business,
+User, Ops, Handover), covering the developer guide, architecture, API reference, runbook, user
+guide, 1-year forecast, budget and 30 more. Ask for a PDF and it renders that pack, in your
+project's own colours, fonts and logo. When the code changes, only the affected sections are patched.
 
-![Sample pages: a detected-theme cover, an architecture page with a Mermaid diagram, a forecast chart, and a default-theme API reference and data model](.github/assets/showcase.png)
+![Sample pages: a detected-theme Developer Pack cover and chapter, and a default-theme cover, API reference and data model, each chapter carrying its pack-colour band](.github/assets/showcase.png)
 
 [![CI](https://github.com/zalhashemi/proj-docs/actions/workflows/ci.yml/badge.svg)](https://github.com/zalhashemi/proj-docs/actions/workflows/ci.yml)
 ![License: MIT](https://img.shields.io/badge/license-MIT-blue)
@@ -41,32 +41,37 @@ Just ask:
 
 Claude then:
 1. **Scans** the repo: stack, scripts, routes, models, env var names, CI, tests and git history.
-2. Lets you **pick documents**, by pack (Developer, Business, User, Ops, Handover, Everything) or one by one.
+2. Lets you **pick packs** (Developer, Business, User, Ops, Handover and Governance). Chapters the repo
+   can't back up, like a data model with no database, are left out, and the pack says why.
 3. **Detects your brand** (Tailwind, CSS variables, MUI/Chakra/Mantine/AntD, Flutter, Android,
-   iOS, logo) and fixes low-contrast colours. With no UI, it offers 5 default themes.
+   iOS, logo) and fixes low-contrast colours. With no UI, it uses the default Spectrum theme
+   (one colour per pack) or one of 5 alternatives.
 4. **Asks** only what the repo can't answer. "Unknown" is a fine answer.
-5. **Drafts** each doc from a template, citing file paths. Anything unverified is marked as an assumption.
-6. **Renders**, **verifies** (blank pages, overflow, fonts, links, contrast) and **looks at** the pages.
+5. **Drafts** one `docs/<pack>.md` per pack from the templates, citing file paths. Anything
+   unverified is marked as an assumption.
+6. **Stops.** Ask for a PDF and it **renders** only the packs you name, **verifies** them (blank
+   pages, overflow, fonts, links, contrast) and **looks at** the pages.
 
-Output stays in your repo: `docs/*.md` (editable), `docs/pdf/*.pdf`, and `docs/.project-docs/` (state).
+Output stays in your repo: `docs/<pack>.md` (editable), `docs/pdf/<pack>.pdf` (only when asked),
+and `docs/.project-docs/` (state).
 
 ### Before the project exists
-Ask for a **build plan**. The rest of the catalog is offered once the project is complete,
-unless you ask for a specific document.
+Ask for a **build plan** (the Planning pack). The other packs are offered once the project is
+complete, unless you ask for a specific one.
 
-### Documents
-| Pack | Documents |
+### Packs
+| Pack | Chapters |
 |---|---|
-| Developer | dev guide, architecture (with ADRs), API reference, data model (ERD), testing strategy, CI/CD, env & config reference, contributing, integration guide, upgrade/migration guide |
-| Business | project brief, PRD, roadmap (Gantt table), 1-year forecast (3 scenarios, charts), budget & resources, risk register |
-| User | user guide, quick start (CLI/API variants when there's no UI), admin guide, release notes, troubleshooting & FAQ |
-| Ops | runbook, incident response (+ postmortem), monitoring & SLOs, backup & DR, third-party services |
-| Handover / governance | handover, stakeholders & RACI, dependency inventory, tech-debt register, security threat model (STRIDE), privacy, compliance checklist (GDPR/SOC 2/HIPAA), support & SLA, competitive analysis, onboarding deck outline |
+| Developer | dev guide, architecture (with ADRs), API reference, data model (ERD), testing strategy, CI/CD, env & config reference, contributing, integration guide, security threat model (STRIDE), dependency inventory, tech-debt register |
+| Business | project brief, PRD, roadmap (Gantt table), 1-year forecast (3 scenarios, charts), budget & resources, risk register, competitive analysis |
+| User | user guide, quick start (CLI/API variants when there's no UI), admin guide, release notes, upgrade/migration guide, onboarding deck outline |
+| Ops | runbook, incident response (+ postmortem), monitoring & SLOs, backup & DR, troubleshooting & FAQ, third-party services |
+| Handover and Governance | handover, stakeholders & RACI, privacy, compliance checklist (GDPR/SOC 2/HIPAA), support & SLA |
 
 ## Trust rules
 
 - **No invented facts.** Versions, endpoints, people, costs and compliance status come from the
-  repo or from you. Everything else is visibly tagged as an `ASSUMPTION` and listed in an appendix.
+  repo or from you. Everything else is visibly tagged as an assumption and listed in the pack's last chapter.
 - **No secrets.** Env vars are listed by name only.
 - **Finance maths is computed by a script**, shown as inputs → formulas → outputs, with ranges
   and a "planning estimates, not financial advice" line.
@@ -74,11 +79,12 @@ unless you ask for a specific document.
 
 ## Examples
 
-Rendered samples, generated by the skill from the test fixtures:
-- [`samples/brightcart/`](samples/brightcart/docs/pdf/): a React + Tailwind app, theme detected from the code
-- [`samples/ledgerline/`](samples/ledgerline/docs/pdf/): a FastAPI service with the corporate-blue theme
+Samples generated by the skill from the test fixtures. Each has its pack Markdown in `docs/`
+and one rendered PDF, the Developer pack:
+- [`samples/brightcart/`](samples/brightcart/docs/): a React + Tailwind app, theme detected from the code
+- [`samples/ledgerline/`](samples/ledgerline/docs/): a FastAPI service in the default Spectrum theme
 - [`samples/theme-previews/themes.pdf`](samples/theme-previews/themes.pdf): all themes side by side
-- [`docs/pdf/dev-guide.pdf`](docs/pdf/dev-guide.pdf): the skill documenting itself
+- [`docs/pdf/developer.pdf`](docs/pdf/developer.pdf): the skill documenting itself
 
 The finance figures in the samples come from sample inputs, not real data.
 

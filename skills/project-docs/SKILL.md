@@ -1,13 +1,13 @@
 ---
 name: project-docs
 description: >-
-  Generate branded PDF project documentation from a real codebase: a build plan before the
-  project exists, then dev guide, architecture doc, API reference, data model, runbook, user
-  guide, onboarding docs, handover docs, PRD, roadmap, 1-year forecast, budget and resource
-  plan, risk register, compliance checklists and more (37 doc types, grouped into Developer,
-  Business, User, Ops and Handover packs). Styles every PDF with the project's own colors,
-  fonts and logo, or with a default theme. Also updates existing docs in place when the
-  project changes. Use whenever the user asks for project documentation, a docs pack,
+  Generate project documentation from a real codebase as one Markdown pack per category
+  (Planning, Developer, Business, User, Ops, Handover and Governance), rendered to a branded
+  PDF on request. Chapters cover a build plan before the project exists, then dev guide,
+  architecture, API reference, data model, runbook, user guide, onboarding, handover, PRD,
+  roadmap, 1-year forecast, budget and resource plan, risk register, compliance checklists and
+  more (37 chapter types). PDFs use the project's own colors, fonts and logo, or a default
+  theme. Also updates existing packs in place when the project changes. Use whenever the user asks for project documentation, a docs pack,
   "generate PDFs for this project", or any of the documents above, even without saying "PDF".
   Not for a single README edit, inline code comments or docstrings.
 when_to_use: >-
@@ -18,10 +18,12 @@ when_to_use: >-
 
 # project-docs
 
-Turn a repository into a set of branded, evidence-based PDF documents.
+Turn a repository into a few evidence-based Markdown packs, and into branded PDFs when asked.
 
-`$SKILL` = `${CLAUDE_SKILL_DIR}`. All output stays inside the target project: Markdown in `docs/`,
-PDFs in `docs/pdf/`, state in `docs/.project-docs/`. Never write outside `docs/` without asking. Never commit.
+`$SKILL` = `${CLAUDE_SKILL_DIR}`. All output stays inside the target project: one `docs/<pack>.md`
+per selected pack, PDFs in `docs/pdf/` (only on request), state in `docs/.project-docs/`. Never write
+outside `docs/` without asking. Never commit. Write nothing beyond what this file lists: no per-chapter
+files, no extra packs, no PDFs nobody asked for.
 Read `reference/writing-standards.md` before drafting: its no-fabrication rules make the docs trustworthy.
 
 ## 0. Environment and mode
@@ -35,35 +37,32 @@ nor Chrome. Then: `docs/.project-docs/state.json` exists → **update mode** (se
 
 ```bash
 $PY $SKILL/scripts/scan_project.py <project> --out docs/.project-docs/scan.json
+$PY $SKILL/scripts/state.py packs      # per pack: chapters the scan supports, and those skipped (why)
 ```
-
 Skim the JSON summary: project type, `has_ui`, stack, `stage_hint`.
 
-## 2. Stage: build plan first, everything else when complete
-
-Docs follow the project lifecycle so you don't produce 40 PDFs about code that doesn't exist yet.
+## 2. Stage: Planning pack first, the rest when complete
 
 - **planning**: the project isn't built yet. Expect `stage_hint: planning` (few or no source
-  files, few commits); confirm it with the user. Offer only `build-plan` (catalog `stage: planning`).
-- **complete**: the user says the project is finished, or confirms it when you ask. Offer
-  the full catalog (section 3).
-- A user who explicitly asks for a specific document gets it in any stage. Note in the doc's
-  assumptions appendix that the project was still in progress.
+  files, few commits); confirm it with the user. Write only the `planning` pack.
+- **complete**: the user says the project is finished, or confirms it when you ask. Offer the
+  other packs (section 3).
+- A user who explicitly asks for a specific pack or chapter gets it in any stage. Note in the
+  assumptions chapter that the project was still in progress.
 
 Record the stage with `$PY $SKILL/scripts/state.py set-stage <planning|complete>`.
 
-## 3. Select documents (complete stage)
+## 3. Select packs (complete stage)
 
-Read `catalog.yaml` (entries plus `presets`). Use `AskUserQuestion` with at most 4 options
-per question:
+Read `catalog.yaml` (`packs` and `docs`; each doc is a chapter of exactly one pack). Ask once with
+`AskUserQuestion`, two multi-select questions in one call: **Q1** Developer, Business, User, Ops;
+**Q2** Handover and Governance, None. Show each pack's chapter count from `state.py packs`.
+Write only the packs the user picks.
 
-1. **Q1 (pack):** Developer, Business, User, Ops. **Q2:** Handover, Everything, Custom.
-2. For **Custom**, ask one multi-select question per audience group, 4 docs each, over as
-   many questions as needed.
-
-Show each doc's `est_pages`. Add the `depends_on` docs only if the user agrees.
-If `has_ui` is false, `user-guide` and `quick-start` use the template's CLI/API variant.
-**Tell the user** you did that.
+Chapters per pack: start from `state.py packs` → `chapters`. Its `skipped` chapters (failed `needs`)
+stay out. Also leave out any chapter that has neither repo evidence nor user answers to its
+`required_inputs` (e.g. a forecast with every input unknown). Don't add chapters to fill a pack.
+If `has_ui` is false, `user-guide` and `quick-start` use the template's CLI/API variant. **Tell the user.**
 
 ## 4. Theme
 
@@ -82,68 +81,70 @@ Details: `reference/theme-detection.md`.
 
 ## 5. Gather inputs
 
-Collect the `required_inputs` of the selected docs, minus anything the scan already answers.
+Collect the `required_inputs` of the included chapters only, minus anything the scan already answers.
 Ask in batches of up to 4, offer each `default`, and accept "unknown". Unknowns become
 assumptions, never invented facts. Save the answers to `docs/.project-docs/inputs.yaml`.
 
-## 6. Draft
+## 6. Draft `docs/<pack>.md`
 
-For each doc, in dependency order:
+One file per pack. Front matter: `title` (the pack title), `subtitle`, `version: 1.0.0`, `date`,
+`author`, `project`, `pack: <id>`, `chapters: [<ids in catalog order>]`, `confidential`. Then, per chapter:
 
-- Start from `templates/<template>`. Read only the `sources_to_scan` it lists, plus `scan.json`.
-- Write `docs/<id>.md`. Keep the template's front matter and fill in title, version and date.
+- `# <Chapter title> {#ch-<id>}`, then the body of `templates/<template>` (drop its front matter,
+  its "Related documents" section and its assumptions section). Read only the template's
+  `sources_to_scan`, plus `scan.json`.
 - Ground every claim in the repo and cite paths (`src/api/orders.ts`). Follow the
   `<!-- guide: -->` comments; they are stripped at render time.
+- Link to another chapter in the same pack as `[Architecture](#ch-architecture)`. Name a chapter in
+  another pack in plain text ("see the Ops pack, Runbook").
 - For `forecast-1yr` and `budget-resources`, never do the arithmetic yourself. Run
   `$PY $SKILL/scripts/finance.py <forecast|budget> --inputs docs/.project-docs/inputs.yaml`
   and paste its tables and chart paths.
 - For `dev-guide`, run safe commands (`--help`, lint, dry-run) and mark any command you didn't
   run with `⟨untested⟩`.
-- End each doc with the "Assumptions and open questions" appendix.
 
-Detailed drafting rules: `reference/workflow-details.md`.
+End the pack with one `# Assumptions and open questions {#ch-assumptions}` chapter: a single
+"Not included:" line naming the chapters left out and why, then one table for the whole pack
+(`reference/writing-standards.md` §2). Detailed drafting rules: `reference/workflow-details.md`.
 
-## 7. Render
+## 7. Record and report
 
-```bash
-$PY $SKILL/scripts/build_pdf.py docs/<id>.md --theme docs/.project-docs/theme.json --out docs/pdf/
-$PY $SKILL/scripts/build_pdf.py docs/*.md --combine --out docs/pdf/docs-pack.pdf   # optional
-```
+Run `$PY $SKILL/scripts/state.py record`, then stop. Report the pack files written, chapters
+left out (and why), docs adapted for no-UI projects, and a short **Open assumptions and missing
+inputs** list. Offer the PDF in one line. **Don't render unless the user asks.**
 
-WeasyPrint is the default renderer. Use `--renderer chromium` for Mermaid or JS-heavy docs.
-The script falls back automatically and says so. Offer the combined pack.
-
-## 8. Verify and report
+## 8. PDF, only when asked
 
 ```bash
-$PY $SKILL/scripts/verify_pdf.py docs/pdf/*.pdf --theme docs/.project-docs/theme.json
+$PY $SKILL/scripts/build_pdf.py docs/<pack>.md --theme docs/.project-docs/theme.json --out docs/pdf/
+$PY $SKILL/scripts/verify_pdf.py docs/pdf/<pack>.pdf --theme docs/.project-docs/theme.json
 ```
 
-Fix every failure. Open the PNGs in `docs/.project-docs/preview/` and look at least at the
-cover, one table-heavy page and one code-heavy page. Then run
-`$PY $SKILL/scripts/state.py record` to store hashes for later updates.
-
-Report: output paths, the theme used, docs adapted for no-UI projects, and a short
-**Open assumptions and missing inputs** list.
+Render only the packs the user named. Combine (`docs/*.md --combine`) only if they ask for a single
+file. WeasyPrint is the default renderer. Use `--renderer chromium` for Mermaid or JS-heavy docs;
+the script falls back automatically and says so. Fix every verify failure, then open the PNGs in
+`docs/.project-docs/preview/`: the cover, one table-heavy page and one code-heavy page.
 
 ## 9. Update mode: add or adjust, never rewrite
 
-When the project changes, update the docs the way a careful editor would: touch only what changed.
+When the project changes, update the packs the way a careful editor would: touch only what changed.
 
 ```bash
 $PY $SKILL/scripts/scan_project.py <project> --out docs/.project-docs/scan.json
 $PY $SKILL/scripts/state.py diff
 ```
 
-`diff` lists only the docs whose `scan_keys` changed, and what changed (e.g. "route
-`POST /orders` added"). It also flags docs the user hand-edited. For each affected doc:
+`diff` lists only the packs whose watched scan keys changed, and per pack the affected
+**chapters** with what changed (e.g. "route `POST /orders` added"). It also flags hand-edited packs
+and skipped chapters that now have evidence (`included: false`). For each affected pack:
 
-- Patch **only the affected sections** with the Edit tool: add a table row, fix a command,
-  add a subsection. Don't redraft the doc or "improve" untouched prose.
-- If the doc was hand-edited, show the proposed patch as a diff and apply it only after the
+- Patch **only the affected chapter sections** with the Edit tool: add a table row, fix a command,
+  add a subsection. Don't redraft or "improve" untouched prose. Offer newly supported chapters; add
+  one (and its id in `chapters:`) only if the user agrees.
+- If the pack was hand-edited, show the proposed patch as a diff and apply it only after the
   user approves.
-- Bump version and date with `$PY $SKILL/scripts/state.py bump <id>`.
-- Re-render only the patched docs, plus the combined pack if one exists. Then run `state.py record`.
+- Bump version and date with `$PY $SKILL/scripts/state.py bump <pack>`, then `state.py record --pack <pack>`.
+- Re-render a pack only if `docs/pdf/<pack>.pdf` already exists (plus a combined PDF if one exists).
 
-If the stage moved from planning to complete, offer the full catalog. Leave `build-plan` as it is.
+If the stage moved from planning to complete, offer the pack selection. Leave `planning` as it is.
 If nothing relevant changed, say so and stop.

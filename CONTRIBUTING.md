@@ -18,7 +18,7 @@ is present. Mermaid tests need `mmdc` (`npm i -g @mermaid-js/mermaid-cli`).
 
 - [ ] `pytest tests -q` passes
 - [ ] `claude plugin validate --strict .` passes (if you touched manifests or `SKILL.md`)
-- [ ] New document type: catalog entry + template (see `skills/project-docs/README.md`)
+- [ ] New chapter type: catalog entry (with its `pack`) + template (see `skills/project-docs/README.md`)
 - [ ] Visual changes: render a sample (`samples/`) and look at the pages, not just the tests
 - [ ] `SKILL.md` stays under 150 lines; detail goes in `reference/`
 - [ ] `CHANGELOG.md` updated

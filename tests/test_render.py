@@ -144,6 +144,18 @@ def test_theme_vars_and_page_css():
     assert "size: Letter" in p and 'Acme \\"Pro\\"' in p and "@page doc-x" in p and "Confidential" in p
 
 
+def test_pack_colours_and_brand_fallback():
+    default = json.loads((build_pdf.SKILL_DIR / "themes" / "default.json").read_text())
+    assert build_pdf.pack_color(default, "business") == default["packs"]["business"]
+    assert "--pack: " + default["packs"]["ops"] in build_pdf.theme_vars(default, "a4", "ops")
+    assert build_pdf.spectrum(default)[1] == default["packs"]["developer"]          # catalog pack order
+    brand = json.loads((build_pdf.SKILL_DIR / "themes" / "midnight.json").read_text())   # no packs map
+    assert build_pdf.pack_color(brand, "business") == brand["colors"]["primary"]
+    assert brand["colors"]["primary"] in build_pdf.spectrum(brand)
+    css = build_pdf.page_css(default, "a4", "Acme", [("ch-x-1", "Setup", 1)], False, "user")
+    assert "@page ch-x-1 { margin-left: 58mm;" in css and default["packs"]["user"] in css and '"01"' in css
+
+
 def test_weasyprint_fallback(monkeypatch):
     def broken(self):
         raise build_pdf.RendererUnavailable("WeasyPrint unavailable (no pango)")
@@ -178,7 +190,7 @@ def test_render_single_doc(docs):
     assert res["outputs"] == [str(pdf)] and pdf.is_file()
     d = fitz.open(pdf)
     text = " ".join(p.get_text() for p in d)
-    assert d.metadata["title"] == "Developer Guide — Ledgerline"
+    assert d.metadata["title"] == "Developer Guide · Ledgerline"
     assert d.metadata["author"] == "Platform team"
     assert "Contents" in d[1].get_text()
     assert "must not appear" not in text
@@ -188,12 +200,47 @@ def test_render_single_doc(docs):
     toc_text = d[1].get_text()
     running_page = next(i for i, p in enumerate(d) if "make dev" in p.get_text()) + 1
     assert f"Running\n{running_page}" in toc_text or f"Running {running_page}" in toc_text.replace("\n", " ")
-    # cross-doc link is a relative go-to-file link
-    files = [ln.get("file") for p in d for ln in p.get_links() if ln["kind"] == fitz.LINK_GOTOR]
-    assert files == ["architecture.pdf"]
+    # links to other packs are plain text: their PDF may not exist
+    assert not [ln for p in d for ln in p.get_links() if ln["kind"] == fitz.LINK_GOTOR]
     v = verify_pdf.main([str(pdf), "--theme", str(docs / ".project-docs/theme.json"), "--json"])
     assert v == 0
     assert sorted((docs / ".project-docs/preview").glob("dev-guide-p*.png"))
+
+
+PACK = """---
+title: Developer Pack
+project: Ledgerline
+pack: developer
+chapters: [dev-guide, architecture]
+---
+
+# Developer Guide {#ch-dev-guide}
+
+## Setup
+
+See [the architecture](#ch-architecture).
+
+# Architecture {#ch-architecture}
+
+## Overview
+
+Text.
+"""
+
+
+@needs_renderer
+def test_render_pack_chapters(docs):
+    (docs / "developer.md").write_text(PACK)
+    res = build_pdf.build([docs / "developer.md"], None, None, renderer=RENDERER)
+    assert res["outputs"] == [str(docs / "pdf" / "developer.pdf")]
+    d = fitz.open(res["outputs"][0])
+    assert [(lvl, t) for lvl, t, _ in d.get_toc()][2:] == [(1, "Developer Guide"), (2, "Setup"),
+                                                     (1, "Architecture"), (2, "Overview")]
+    setup = next(i for i, p in enumerate(d) if "Setup" in p.get_text() and "Contents" not in p.get_text())
+    overview = next(i for i, p in enumerate(d) if "Overview" in p.get_text() and "Contents" not in p.get_text())
+    assert overview == setup + 1                       # each chapter opens a page
+    assert [ln["page"] for ln in d[setup].get_links()] == [overview]               # in-pack chapter link
+    assert verify_pdf.main([res["outputs"][0], "--no-thumbnails"]) == 0
 
 
 @needs_renderer
@@ -253,6 +300,10 @@ def test_verify_theme_contrast(tmp_path):
     p = tmp_path / "t.json"
     p.write_text(json.dumps(bad))
     assert any("text on bg" in e for e in verify_pdf.check_theme(p))
+    bad = json.loads((build_pdf.SKILL_DIR / "themes" / "default.json").read_text())
+    bad["packs"]["user"] = "#f5c400"
+    p.write_text(json.dumps(bad))
+    assert any("pack 'user'" in e for e in verify_pdf.check_theme(p))
 
 
 def test_verify_missing_file(tmp_path):
